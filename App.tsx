@@ -346,8 +346,8 @@ const Hub = () => {
       <header className="max-w-4xl mx-auto flex items-center justify-between py-4 mb-6">
         <div className="w-10"></div>
         <div className="flex items-center gap-3">
-          <img src={APP_LOGO} alt="Lingbo" className="w-12 h-12 object-contain" />
-          <h1 className="text-4xl font-bold text-primary tracking-tight">Lingbo</h1>
+          <img src={APP_LOGO} alt="Lingbo" className="w-10 h-10 object-contain" />
+          <h1 className="text-3xl font-bold text-primary tracking-tight">Lingbo</h1>
         </div>
         <Link to="/profile" className="p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"><Settings size={20} className="text-gray-500" /></Link>
       </header>
@@ -374,13 +374,14 @@ const Hub = () => {
         </div>
 
         {/* Fun Fact Bubble */}
-        <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-full px-5 py-2 shadow-sm border-2 border-purple-100 hover:shadow-md transition-all max-w-lg mx-auto">
-          <div className="flex items-center gap-3">
-            <div className="shrink-0 bg-purple-100 p-1.5 rounded-full">
-              <Lightbulb size={14} className="text-purple-600" />
+        <div className="bg-gradient-to-r from-purple-50 to-pink-50 rounded-2xl p-4 shadow-sm border border-purple-100 hover:shadow-md transition-all">
+          <div className="flex items-start gap-3">
+            <div className="shrink-0 bg-white p-2 rounded-full shadow-sm">
+              <Lightbulb size={20} className="text-purple-500" />
             </div>
-            <div className="flex-1">
-              <p className="text-[11px] text-purple-900 leading-snug"><span className="font-bold text-purple-600">Did you know?</span> {funFact}</p>
+            <div>
+              <p className="text-xs font-bold text-purple-400 uppercase tracking-wide mb-1">Did you know?</p>
+              <p className="text-sm text-gray-700 leading-relaxed font-medium">{funFact}</p>
             </div>
           </div>
         </div>
@@ -401,16 +402,16 @@ const Hub = () => {
             </div>
           </button>
 
-          <button onClick={() => setShowProfileSelector('kid')} className="group relative bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:border-yellow-200 transition-all text-left overflow-hidden">
-            <div className="absolute top-0 right-0 w-32 h-32 bg-yellow-100 rounded-bl-full opacity-50 group-hover:scale-110 transition-transform origin-top-right duration-500"></div>
+          <button onClick={() => setShowProfileSelector('kid')} className="group relative bg-white rounded-3xl p-8 shadow-sm border border-gray-100 hover:shadow-xl hover:border-green-200 transition-all text-left overflow-hidden">
+            <div className="absolute top-0 right-0 w-32 h-32 bg-green-100 rounded-bl-full opacity-50 group-hover:scale-110 transition-transform origin-top-right duration-500"></div>
             <div className="relative z-10">
-              <div className="w-14 h-14 bg-yellow-400 text-yellow-900 rounded-2xl flex items-center justify-center mb-6 shadow-yellow-200 shadow-lg group-hover:scale-110 transition-transform">
-                <Smile size={32} />
+              <div className="w-14 h-14 bg-green-500 text-white rounded-2xl flex items-center justify-center mb-6 shadow-green-200 shadow-lg group-hover:scale-110 transition-transform">
+                <Gamepad2 size={32} />
               </div>
               <h2 className="text-2xl font-bold text-gray-800 mb-2">Kids Corner</h2>
-              <p className="text-gray-500">Fun games, stories, and interactive activities designed for children.</p>
-              <div className="mt-6 flex items-center gap-2 text-yellow-600 font-bold text-sm group-hover:gap-3 transition-all">
-                <Users size={16} /> Select Profile <ChevronRight size={16} />
+              <p className="text-gray-500">Fun games, stories, and songs designed for children.</p>
+              <div className="mt-6 flex items-center gap-2 text-green-600 font-bold text-sm group-hover:gap-3 transition-all">
+                <Smile size={16} /> Enter Kids Mode <ChevronRight size={16} />
               </div>
             </div>
           </button>
@@ -639,12 +640,12 @@ const KidsDashboard = () => {
             <button
               key={activity.title}
               onClick={() => navigate(activity.path)}
-              className="bg-white border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 rounded-3xl p-6 flex flex-col items-center gap-4 shadow-sm hover:shadow-md transition-all"
+              className="bg-white border-4 border-gray-100 border-b-8 active:border-b-4 active:translate-y-1 rounded-[2rem] p-6 flex flex-col items-center gap-4 shadow-sm hover:shadow-xl transition-all group"
             >
-              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl ${activity.color} group-hover:scale-110 group-hover:animate-bounce transition-transform`}>
-                <activity.icon size={32} />
+              <div className={`w-20 h-20 rounded-3xl flex items-center justify-center text-4xl ${activity.color} group-hover:scale-110 group-hover:rotate-12 transition-transform shadow-inner`}>
+                <activity.icon size={40} />
               </div>
-              <span className="font-kids font-bold text-lg text-gray-700 text-center">{activity.title}</span>
+              <span className="font-kids font-bold text-xl text-gray-700 text-center group-hover:text-primary transition-colors">{activity.title}</span>
             </button>
           ))}
         </div>
@@ -692,30 +693,34 @@ const KidsDashboard = () => {
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
           <button
             onClick={() => navigate('/kids/worksheet/alphabet')}
-            className="w-full bg-white border-b-4 border-purple-200 active:border-b-0 active:translate-y-1 rounded-3xl p-6 flex items-center gap-6 shadow-sm hover:shadow-md transition-all group"
+            className="w-full bg-white border-4 border-purple-200 border-b-8 active:border-b-4 active:translate-y-1 rounded-[2rem] p-6 flex items-center gap-6 shadow-sm hover:shadow-xl transition-all group"
           >
-            <div className="w-20 h-20 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
-              <Eraser size={40} />
+            <div className="w-24 h-24 bg-purple-100 rounded-3xl flex items-center justify-center text-purple-600 group-hover:scale-110 group-hover:rotate-6 transition-transform">
+              <Eraser size={48} />
             </div>
-            <div className="text-left">
-              <h3 className="font-kids text-2xl text-gray-800 mb-1">Alphabet Tracing</h3>
-              <p className="text-gray-500">Practice writing your ABCs</p>
+            <div className="text-left flex-1">
+              <h3 className="font-kids text-3xl font-bold text-gray-800 mb-2">Alphabet Tracing</h3>
+              <p className="text-gray-500 font-medium text-lg">Practice writing your ABCs</p>
             </div>
-            <ChevronRight className="ml-auto text-purple-300" size={32} />
+            <div className="bg-purple-100 p-3 rounded-full">
+              <ChevronRight className="text-purple-500" size={32} />
+            </div>
           </button>
 
           <button
             onClick={() => navigate('/library')}
-            className="w-full bg-white border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 rounded-3xl p-6 flex items-center gap-6 shadow-sm hover:shadow-md transition-all group"
+            className="w-full bg-white border-4 border-gray-200 border-b-8 active:border-b-4 active:translate-y-1 rounded-[2rem] p-6 flex items-center gap-6 shadow-sm hover:shadow-xl transition-all group"
           >
-            <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-600 group-hover:scale-110 transition-transform">
-              <FileText size={40} />
+            <div className="w-24 h-24 bg-gray-100 rounded-3xl flex items-center justify-center text-gray-600 group-hover:scale-110 group-hover:-rotate-6 transition-transform">
+              <FileText size={48} />
             </div>
-            <div className="text-left">
-              <h3 className="font-kids text-2xl text-gray-800 mb-1">Printable Worksheets</h3>
-              <p className="text-gray-500">Download and print fun activities</p>
+            <div className="text-left flex-1">
+              <h3 className="font-kids text-3xl font-bold text-gray-800 mb-2">Printable Worksheets</h3>
+              <p className="text-gray-500 font-medium text-lg">Download and print fun activities</p>
             </div>
-            <ChevronRight className="ml-auto text-gray-300" size={32} />
+            <div className="bg-gray-100 p-3 rounded-full">
+              <ChevronRight className="text-gray-400" size={32} />
+            </div>
           </button>
         </div>
       );
@@ -733,13 +738,16 @@ const KidsDashboard = () => {
       {!activeSection ? (
         <div className="space-y-8">
           {/* Welcome Banner */}
-          <div className="flex items-center gap-4 bg-gradient-to-r from-yellow-100 to-orange-100 p-6 rounded-3xl border-2 border-yellow-200 shadow-sm">
-            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-4xl shadow-md animate-bounce-slow">
+          <div className="flex items-center gap-6 bg-white p-8 rounded-[2.5rem] border-4 border-yellow-100 shadow-sm relative overflow-hidden">
+            <div className="absolute -right-10 -top-10 w-40 h-40 bg-yellow-50 rounded-full opacity-50"></div>
+            <div className="absolute -left-10 -bottom-10 w-32 h-32 bg-orange-50 rounded-full opacity-50"></div>
+
+            <div className="w-24 h-24 bg-yellow-100 rounded-full flex items-center justify-center text-5xl shadow-inner border-4 border-white relative z-10 animate-bounce-slow">
               {activeProfile?.avatar || '🐻'}
             </div>
-            <div>
-              <h2 className="font-kids font-bold text-2xl text-yellow-900">Hi, {activeProfile?.name}!</h2>
-              <p className="text-yellow-700 font-medium">What do you want to do today?</p>
+            <div className="relative z-10">
+              <h2 className="font-kids font-bold text-4xl text-gray-800 mb-1">Hi, {activeProfile?.name}! 👋</h2>
+              <p className="text-gray-500 font-bold text-xl">Ready to play?</p>
             </div>
           </div>
 
@@ -749,17 +757,17 @@ const KidsDashboard = () => {
               <button
                 key={section.id}
                 onClick={() => setActiveSection(section.id)}
-                className="group relative bg-white rounded-[2rem] p-6 shadow-sm border-2 border-gray-100 hover:border-transparent hover:shadow-xl transition-all overflow-hidden text-left h-48 flex flex-col justify-between"
+                className="group relative bg-white rounded-[2.5rem] p-8 shadow-sm border-4 border-gray-100 border-b-8 hover:border-b-4 hover:translate-y-1 hover:shadow-xl transition-all overflow-hidden text-left h-56 flex flex-col justify-between"
               >
-                <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-20 transition-transform group-hover:scale-150 duration-500 ${section.accent.split(' ')[0]}`}></div>
+                <div className={`absolute top-0 right-0 w-40 h-40 rounded-bl-full opacity-10 transition-transform group-hover:scale-150 duration-700 ${section.accent.split(' ')[0]}`}></div>
 
-                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-4 ${section.accent} group-hover:scale-110 group-hover:animate-bounce transition-transform duration-300`}>
-                  <section.icon size={28} />
+                <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center text-4xl shadow-sm mb-4 ${section.accent} group-hover:scale-110 group-hover:rotate-12 transition-transform duration-300`}>
+                  <section.icon size={40} />
                 </div>
 
                 <div className="relative z-10">
-                  <h3 className="font-kids text-2xl font-bold text-gray-800 mb-1 group-hover:text-primary transition-colors">{section.title}</h3>
-                  <p className="text-sm text-gray-500 font-medium">{section.blurb}</p>
+                  <h3 className="font-kids text-4xl font-bold text-gray-800 mb-2 group-hover:text-primary transition-colors">{section.title}</h3>
+                  <p className="text-gray-500 font-bold text-lg">{section.blurb}</p>
                 </div>
               </button>
             ))}
