@@ -62,7 +62,7 @@ import {
 import { playPCMAudio, playGameSound } from './services/audioService';
 import { ChatMessage, VideoResource, AnalysisResult, UserProfile, ProfileType, QuizItem } from './types';
 
-const APP_LOGO = new URL('./assets/images/lingbo_logo_main.png', import.meta.url).href;
+const APP_LOGO = 'https://i.ibb.co/RGFF4bgS/lingbo-logo-main-png.png';
 
 // --- Global Context for User & Profiles ---
 interface UserContextType {
