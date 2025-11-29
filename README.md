@@ -1,12 +1,8 @@
-<div align="center">
-<img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
-</div>
 
 # Lingbo - Learn Igbo The Natural Way 🌿
 
 **Lingbo** is an interactive, dual-interface web application designed to make learning the Igbo language accessible, fun, and engaging for all ages. Whether you are an adult looking to reconnect with your roots or a child taking your first steps into the language, Lingbo provides a tailored experience just for you.
 
-Powered by **Google's Gemini API**, Lingbo integrates advanced AI features like a real-time tutor, speech synthesis, and pronunciation analysis to accelerate your learning journey.
 
 ---
 
