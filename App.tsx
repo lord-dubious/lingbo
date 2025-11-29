@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect, useRef, createContext, useContext } from 'react';
+import React, { useState, useEffect, useRef, useCallback, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { HashRouter, Routes, Route, useNavigate, useParams, Link, Navigate, useLocation } from 'react-router-dom';
 import {
@@ -39,12 +39,16 @@ import {
   Timer,
   Hash,
   Lightbulb,
-  Loader2
+  Loader2,
+  Download,
+  Eraser,
+  Printer
 } from 'lucide-react';
 import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 
 import Layout from './components/Layout';
 import IgboKeyboard from './components/IgboKeyboard';
+import WorksheetFlipbook from './components/WorksheetFlipbook';
 import { ADULT_CURRICULUM, KIDS_FLASHCARDS, KIDS_GAMES, LIBRARY_BOOKS, VIDEO_RESOURCES, IGBO_ALPHABET_FULL, ACHIEVEMENTS, MEMORY_GAME_DATA, IGBO_NUMBERS, WORKSHEETS, FUN_FACTS } from './constants';
 import {
   generateTutorResponse,
@@ -56,6 +60,8 @@ import {
 } from './services/geminiService';
 import { playPCMAudio, playGameSound } from './services/audioService';
 import { ChatMessage, VideoResource, AnalysisResult, UserProfile, ProfileType } from './types';
+
+const APP_LOGO = new URL('./assets/images/lingbo_logo_main.png', import.meta.url).href;
 
 // --- Global Context for User & Profiles ---
 interface UserContextType {
@@ -338,7 +344,10 @@ const Hub = () => {
 
       <header className="max-w-4xl mx-auto flex items-center justify-between py-4 mb-6">
         <div className="w-10"></div>
-        <h1 className="text-4xl font-bold text-primary tracking-tight">Lingbo</h1>
+        <div className="flex items-center gap-3">
+          <img src={APP_LOGO} alt="Lingbo" className="w-12 h-12 object-contain" />
+          <h1 className="text-4xl font-bold text-primary tracking-tight">Lingbo</h1>
+        </div>
         <Link to="/profile" className="p-2 bg-white rounded-full shadow-sm hover:shadow-md transition-shadow"><Settings size={20} className="text-gray-500" /></Link>
       </header>
 
@@ -503,6 +512,25 @@ const AdultDashboard = () => {
     setFunFact(FUN_FACTS[Math.floor(Math.random() * FUN_FACTS.length)]);
   }, []);
 
+  const [speakingWord, setSpeakingWord] = useState<string | null>(null);
+
+  const handleSpeakWord = useCallback(async (word: string) => {
+    if (speakingWord === word) return;
+    setSpeakingWord(word);
+    try {
+      const audio = await generateIgboSpeech(word);
+      if (audio) {
+        await playPCMAudio(audio);
+      } else {
+        console.warn('No audio data returned for', word);
+      }
+    } catch (err) {
+      console.error('Adult lesson TTS failed', err);
+    } finally {
+      setSpeakingWord(null);
+    }
+  }, [speakingWord]);
+
   return (
     <Layout title="Curriculum" showBack backPath="/hub">
       <div className="space-y-6">
@@ -568,22 +596,92 @@ const AdultDashboard = () => {
 };
 
 // 5. Kids Dashboard
+type KidsSectionId = 'activities' | 'videos' | 'stories' | 'worksheets';
+
+const kidsSections: { id: KidsSectionId; title: string; blurb: string; icon: React.ComponentType<{ size?: number }>; accent: string }[] = [
+  { id: 'activities', title: 'Play & Learn', blurb: 'Games, songs, and chats with Chike.', icon: Gamepad2, accent: 'bg-orange-100 text-orange-600' },
+  { id: 'videos', title: 'Video Time', blurb: 'Dance and sing with Igbo videos.', icon: PlayCircle, accent: 'bg-blue-100 text-blue-600' },
+  { id: 'stories', title: 'Story Books', blurb: 'Colorful books to read with family.', icon: BookOpen, accent: 'bg-green-100 text-green-600' },
+  { id: 'worksheets', title: 'Worksheets', blurb: 'Print-and-play tracing sheets.', icon: FileText, accent: 'bg-purple-100 text-purple-600' }
+];
+
 const KidsDashboard = () => {
   const navigate = useNavigate();
   const { activeProfile } = useUser();
+  const [openSection, setOpenSection] = useState<KidsSectionId>('activities');
 
-  const shortcuts = [
-    { name: "Library", icon: BookOpen, color: "bg-blue-100 text-blue-600", path: "/library" },
-    { name: "Videos", icon: PlayCircle, color: "bg-red-100 text-red-600", path: "/videos" },
-    { name: "Speak", icon: Mic, color: "bg-green-100 text-green-600", path: "/practice" },
-    { name: "ABC", icon: Type, color: "bg-purple-100 text-purple-600", path: "/alphabet" },
-    { name: "123", icon: Hash, color: "bg-orange-100 text-orange-600", path: "/numbers" }
+  const activities = [
+    { title: 'Flashcards', icon: ImageIcon, path: '/kids/game/words' },
+    { title: 'Sentence Builder', icon: Puzzle, path: '/kids/game/sentence' },
+    { title: 'Memory Match', icon: Zap, path: '/kids/game/memory' },
+    { title: 'Speed Tap', icon: Timer, path: '/kids/game/speed' },
+    { title: 'Alphabet Sounds', icon: Type, path: '/alphabet' },
+    { title: 'Number Sounds', icon: Hash, path: '/numbers' },
+    { title: 'Chat with Chike', icon: Mic, path: '/practice' }
   ];
+
+  const renderSectionContent = (section: KidsSectionId) => {
+    if (section === 'activities') {
+      return (
+        <div className="grid grid-cols-2 gap-3">
+          {activities.map(activity => (
+            <button
+              key={activity.title}
+              onClick={() => navigate(activity.path)}
+              className="bg-orange-50 hover:bg-orange-100 rounded-2xl px-3 py-3 flex items-center gap-3 text-left transition-colors"
+            >
+              <activity.icon size={20} className="text-orange-500" />
+              <span className="font-bold text-sm text-gray-700">{activity.title}</span>
+            </button>
+          ))}
+        </div>
+      );
+    }
+
+    if (section === 'videos') {
+      return (
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600">Short clips that teach Igbo words, numbers, and songs.</p>
+          <button onClick={() => navigate('/videos')} className="px-4 py-2 bg-blue-500 text-white rounded-full font-bold shadow hover:bg-blue-600">Open Video Library</button>
+        </div>
+      );
+    }
+
+    if (section === 'stories') {
+      const featuredBooks = LIBRARY_BOOKS.slice(0, 3);
+      return (
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-2">
+            {featuredBooks.map((book, idx) => (
+              <div key={idx} className="bg-green-50 rounded-2xl overflow-hidden border border-green-100">
+                <img src={book.cover} className="w-full aspect-[4/5] object-cover" />
+                <div className="p-2 text-center">
+                  <p className="text-[10px] font-bold text-green-700">{book.title}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <button onClick={() => navigate('/library')} className="px-4 py-2 bg-green-500 text-white rounded-full font-bold shadow hover:bg-green-600">See All Books</button>
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-3">
+        <div className="bg-purple-50 rounded-2xl p-4 border border-dashed border-purple-200">
+          <p className="text-xs uppercase text-purple-500 font-bold">new</p>
+          <p className="font-kids text-xl text-purple-800">Alphabet Tracing</p>
+          <p className="text-sm text-purple-700">Trace every Igbo letter the right way.</p>
+          <button onClick={() => navigate('/kids/worksheet/alphabet')} className="mt-3 px-4 py-2 bg-purple-500 text-white rounded-full font-bold shadow hover:bg-purple-600">Start Tracing</button>
+        </div>
+        <button onClick={() => navigate('/library')} className="w-full px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-bold border border-purple-200 hover:bg-purple-200">More Worksheets</button>
+      </div>
+    );
+  };
 
   return (
     <Layout title="Kids Corner" showBack backPath="/hub" isKidsMode hideBottomNav>
       <div className="space-y-8">
-        {/* Header */}
         <div className="flex items-center gap-4 bg-yellow-100 p-4 rounded-3xl border border-yellow-200">
           <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm">
             {activeProfile?.avatar || '🐻'}
@@ -594,88 +692,67 @@ const KidsDashboard = () => {
           </div>
         </div>
 
-        {/* Shortcuts */}
-        <div className="flex justify-between gap-2 overflow-x-auto pb-2 no-scrollbar">
-          {shortcuts.map((s, i) => (
-            <button key={i} onClick={() => navigate(s.path)} className="flex flex-col items-center gap-2 min-w-[64px] group">
-              <div className={`w-14 h-14 rounded-2xl flex items-center justify-center ${s.color} shadow-sm group-active:scale-95 transition-transform`}>
-                <s.icon size={24} />
-              </div>
-              <span className="text-[10px] font-bold text-gray-500 uppercase">{s.name}</span>
-            </button>
+        <div className="grid gap-4 md:grid-cols-2">
+          {kidsSections.map(section => (
+            <div key={section.id} className="rounded-3xl bg-white border border-gray-100 p-5 shadow-sm">
+              <button
+                onClick={() => setOpenSection(section.id)}
+                className="w-full flex items-center gap-3 text-left"
+              >
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${section.accent}`}>
+                  <section.icon size={24} />
+                </div>
+                <div>
+                  <h3 className="font-kids text-2xl text-gray-800">{section.title}</h3>
+                  <p className="text-sm text-gray-500">{section.blurb}</p>
+                </div>
+              </button>
+              {openSection === section.id && (
+                <div className="mt-4 border-t border-gray-100 pt-4">
+                  {renderSectionContent(section.id)}
+                </div>
+              )}
+            </div>
           ))}
         </div>
+      </div>
+    </Layout>
+  );
+};
 
-        {/* Content Sections */}
-        <div className="space-y-6">
-          {/* BOOKS */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <BookOpen size={20} className="text-blue-500" />
-              <h3 className="font-kids font-bold text-gray-700 text-lg tracking-wide">BOOKS</h3>
-            </div>
-            <button onClick={() => navigate('/library')} className="w-full bg-white rounded-2xl p-4 shadow-sm border border-gray-100 flex items-center gap-4 hover:shadow-md transition-all">
-              <img src="https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=200" className="w-16 h-16 rounded-lg object-cover bg-gray-200" alt="Turtle" />
-              <div className="text-left flex-1">
-                <h4 className="font-bold text-gray-800">The Turtle and the Hare</h4>
-                <p className="text-xs text-blue-500 bg-blue-50 inline-block px-2 py-1 rounded mt-1 font-bold">Interactive Story</p>
-              </div>
-              <PlayCircle size={24} className="text-blue-500" />
+const AlphabetTracingWorksheet = () => {
+  const navigate = useNavigate();
+  const handlePrint = useCallback(() => window.print(), []);
+
+  return (
+    <Layout title="Alphabet Tracing" showBack isKidsMode hideBottomNav>
+      <div className="space-y-6">
+        <div className="bg-white rounded-3xl border border-purple-100 p-5 shadow-sm print:hidden">
+          <h3 className="font-kids text-2xl text-purple-700 mb-2">Trace the Igbo letters</h3>
+          <p className="text-sm text-gray-600">Use a pencil or marker to follow the outlines. Start at the top of each stroke and trace slowly.</p>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button onClick={handlePrint} className="px-4 py-2 bg-purple-500 text-white rounded-full font-bold shadow hover:bg-purple-600 flex items-center gap-2">
+              <Printer size={16} /> Print Worksheet
+            </button>
+            <button onClick={() => navigate('/library')} className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-bold border border-purple-200 hover:bg-purple-200 flex items-center gap-2">
+              <BookOpen size={16} /> More Worksheets
             </button>
           </div>
+        </div>
 
-          {/* VIDEO LIBRARY */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <Video size={20} className="text-red-500" />
-              <h3 className="font-kids font-bold text-gray-700 text-lg tracking-wide">VIDEO LIBRARY</h3>
-            </div>
-            <div className="bg-white rounded-2xl p-4 shadow-sm border border-gray-100">
-              <div className="grid grid-cols-2 gap-3 mb-4">
-                <button onClick={() => navigate('/videos')} className="bg-red-50 hover:bg-red-100 p-4 rounded-xl text-center transition-colors">
-                  <div className="font-bold text-red-600 mb-1">Lessons</div>
-                  <div className="text-xs text-red-400">Watch & Learn</div>
-                </button>
-                <button onClick={() => navigate('/videos')} className="bg-purple-50 hover:bg-purple-100 p-4 rounded-xl text-center transition-colors">
-                  <div className="font-bold text-purple-600 mb-1">Songs</div>
-                  <div className="text-xs text-purple-400">Sing Along</div>
-                </button>
+        <div className="bg-white rounded-3xl border-4 border-purple-100 shadow-xl p-6 print:border print:border-gray-200">
+          <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
+            {IGBO_ALPHABET_FULL.map(letter => (
+              <div key={letter} className="aspect-square border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center">
+                <span
+                  className="text-5xl md:text-6xl font-kids text-gray-400"
+                  style={{ WebkitTextStroke: '2px #cbd5f5', color: 'transparent' }}
+                >
+                  {letter}
+                </span>
               </div>
-              <div>
-                <h5 className="text-xs font-bold text-gray-400 uppercase mb-3 px-1">Activities</h5>
-                <div className="space-y-2">
-                  <button onClick={() => navigate('/kids/game/words')} className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group">
-                    <span className="font-bold text-gray-700">Flashcards</span>
-                    <ImageIcon size={18} className="text-gray-400 group-hover:text-gray-600" />
-                  </button>
-                  <button onClick={() => navigate('/kids/game/sentence')} className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group">
-                    <span className="font-bold text-gray-700">Sentence Puzzle</span>
-                    <Puzzle size={18} className="text-gray-400 group-hover:text-gray-600" />
-                  </button>
-                  <button onClick={() => navigate('/kids/game/memory')} className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group">
-                    <span className="font-bold text-gray-700">Memory Match</span>
-                    <Zap size={18} className="text-gray-400 group-hover:text-gray-600" />
-                  </button>
-                  <button onClick={() => navigate('/kids/game/speed')} className="w-full flex items-center justify-between p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors group">
-                    <span className="font-bold text-gray-700">Speed Tap</span>
-                    <Timer size={18} className="text-gray-400 group-hover:text-gray-600" />
-                  </button>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
-
-          {/* WORKSHEETS */}
-          <div className="space-y-3">
-            <div className="flex items-center gap-2 px-1">
-              <FileText size={20} className="text-orange-500" />
-              <h3 className="font-kids font-bold text-gray-700 text-lg tracking-wide">WORKSHEETS</h3>
-            </div>
-            <button onClick={() => navigate('/library')} className="w-full bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-center hover:shadow-md transition-all">
-              <p className="text-orange-500 font-bold text-sm">View Worksheets in Library</p>
-            </button>
-          </div>
-
         </div>
       </div>
     </Layout>
@@ -1183,11 +1260,7 @@ const WorksheetViewer = () => {
       </div>
       <div className="flex-1 bg-gray-800 overflow-hidden">
         {(worksheet as any).pdfPath ? (
-          <iframe
-            src={`${(worksheet as any).pdfPath}#toolbar=0&navpanes=0&scrollbar=0`}
-            className="w-full h-full border-none"
-            title={worksheet.title}
-          />
+          <WorksheetFlipbook fileUrl={(worksheet as any).pdfPath} title={worksheet.title} />
         ) : (
           <div className="flex items-center justify-center h-full text-white">
             <p>PDF not available</p>
@@ -1359,7 +1432,13 @@ const LessonView = () => {
                 <h4 className="font-bold text-lg text-gray-800">{item.igbo}</h4>
                 <p className="text-gray-500 text-sm">{item.english}</p>
               </div>
-              <button onClick={async () => { const b64 = await generateIgboSpeech(item.igbo); if (b64) playPCMAudio(b64); }} className="p-3 bg-primary/10 text-primary rounded-full hover:bg-primary/20"><Volume2 size={20} /></button>
+              <button
+                onClick={() => handleSpeakWord(item.igbo)}
+                disabled={speakingWord === item.igbo}
+                className={`p-3 rounded-full border border-primary/30 transition-colors ${speakingWord === item.igbo ? 'bg-primary text-white animate-pulse' : 'bg-primary/10 text-primary hover:bg-primary/20'}`}
+              >
+                {speakingWord === item.igbo ? <Loader2 size={20} className="animate-spin" /> : <Volume2 size={20} />}
+              </button>
             </div>
           ))}
         </div>
@@ -1513,6 +1592,7 @@ const App = () => {
           <Route path="/kids/game/sentence" element={<RequireAuth><SentenceGameWrapper /></RequireAuth>} />
           <Route path="/kids/game/memory" element={<RequireAuth><MemoryGameWrapper /></RequireAuth>} />
           <Route path="/kids/game/speed" element={<RequireAuth><SpeedGameWrapper /></RequireAuth>} />
+          <Route path="/kids/worksheet/alphabet" element={<RequireAuth><AlphabetTracingWorksheet /></RequireAuth>} />
 
           {/* Shared Features */}
           <Route path="/library" element={<RequireAuth><Library /></RequireAuth>} />

@@ -60,6 +60,9 @@ Remember: You're teaching, not just translating. Help them understand WHY, not j
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: model,
       contents: prompt,
+      config: {
+        thinkingConfig: { thinkingBudget: 1024 },
+      },
     });
 
     return response.text || "Ndo (Sorry), I couldn't understand that.";
@@ -82,13 +85,13 @@ export const generateIgboSpeech = async (text: string): Promise<string | null> =
   try {
     const ai = getClient();
     const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
+      model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text: text }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Puck' }, // Puck voice for better compatibility
+            prebuiltVoiceConfig: { voiceName: 'Zephyr' }, // Puck voice for better compatibility
           },
         },
       },
@@ -150,8 +153,8 @@ export const analyzePronunciation = async (targetPhrase: string, userTranscript:
        {
          "user_said_igbo": "Transcribe what the user actually said in Igbo (or 'N/A' if completely wrong)",
          "user_said_english": "Translate what the user said to English",
-         "feedback": "Specific advice on pronunciation, tone, or grammar. Keep it short and encouraging.",
-         "score": number (0-100 based on accuracy)
+         "feedback": "Specific advice on pronunciation, tone, or grammar. Keep it short and encouraging."
+        
        }
      `;
 

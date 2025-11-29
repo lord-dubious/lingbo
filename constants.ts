@@ -1,5 +1,7 @@
 import { CurriculumLevel, Flashcard, BookResource, KidGame, VideoResource, Achievement } from './types';
 
+const WORKBOOK_OPPOSITES_PDF = new URL('./assets/workbooks/THE_BOOK_OF_OPPOSITES .pdf', import.meta.url).href;
+
 export const ADULT_CURRICULUM: CurriculumLevel[] = [
   {
     level_id: 1,
@@ -203,7 +205,7 @@ export const WORKSHEETS = [
     id: 'wk1',
     title: 'The Book of Opposites',
     pages: 20,
-    pdfPath: '/assets/workbooks/THE_BOOK_OF_OPPOSITES .pdf',
+    pdfPath: WORKBOOK_OPPOSITES_PDF,
     cover: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=300'
   }
 ];
