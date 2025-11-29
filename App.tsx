@@ -451,11 +451,21 @@ const TextChat = () => {
   const handlePlayAudio = async (text: string, id: string) => {
     if (playingId === id) return;
     setPlayingId(id);
-    const b64 = await generateIgboSpeech(text);
-    if (b64) {
-      await playPCMAudio(b64);
+    try {
+      console.log('Requesting TTS for:', text);
+      const b64 = await generateIgboSpeech(text);
+      if (b64) {
+        console.log('Playing TTS audio...');
+        await playPCMAudio(b64);
+        console.log('TTS playback complete');
+      } else {
+        console.warn('No audio data received from TTS');
+      }
+    } catch (error) {
+      console.error('TTS playback error:', error);
+    } finally {
+      setPlayingId(null);
     }
-    setPlayingId(null);
   };
 
   return (
@@ -925,6 +935,8 @@ const LiveChat = () => {
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
+  const sessionRef = useRef<any>(null);
+  const isConnectingRef = useRef(false);
 
   useEffect(() => {
     return () => disconnect();
@@ -932,19 +944,32 @@ const LiveChat = () => {
 
   const connect = async () => {
     if (!process.env.API_KEY) { alert("API Key missing"); return; }
+    if (isConnectingRef.current || connected) return;
+
+    isConnectingRef.current = true;
 
     try {
+      // Clean up any existing session first
+      await disconnect();
+
       const client = new GoogleGenAI({ apiKey: process.env.API_KEY });
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
+      // Create separate audio context for mic input (don't play it back)
       const audioCtx = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
       audioContextRef.current = audioCtx;
+
+      // Resume context if suspended
+      if (audioCtx.state === 'suspended') {
+        await audioCtx.resume();
+      }
+
       const source = audioCtx.createMediaStreamSource(stream);
       const processor = audioCtx.createScriptProcessor(4096, 1, 1);
       processorRef.current = processor;
 
-      const sessionPromise = client.live.connect({
+      const session = await client.live.connect({
         model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         config: {
           responseModalities: [Modality.AUDIO],
@@ -952,37 +977,114 @@ const LiveChat = () => {
           systemInstruction: { parts: [{ text: "You are Chike, a friendly and educational Igbo language tutor. You speak English with a Nigerian accent. You teach users basic Igbo phrases. Keep your responses concise and helpful for learners. Always encourage them." }] }
         },
         callbacks: {
-          onopen: () => setConnected(true),
+          onopen: () => {
+            console.log('Live session connected');
+            setConnected(true);
+          },
           onmessage: async (message: LiveServerMessage) => {
             const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
-            if (base64Audio) playPCMAudio(base64Audio);
+            if (base64Audio) {
+              console.log('Received audio from Gemini');
+              await playPCMAudio(base64Audio);
+            }
           },
-          onclose: () => setConnected(false),
-          onerror: () => setConnected(false)
+          onclose: () => {
+            console.log('Live session closed');
+            setConnected(false);
+          },
+          onerror: (error) => {
+            console.error('Live session error:', error);
+            setConnected(false);
+          }
         }
       });
 
+      sessionRef.current = session;
+
       processor.onaudioprocess = (e) => {
         const inputData = e.inputBuffer.getChannelData(0);
-        let sum = 0; for (let i = 0; i < inputData.length; i++) sum += inputData[i] * inputData[i];
+        let sum = 0;
+        for (let i = 0; i < inputData.length; i++) {
+          sum += inputData[i] * inputData[i];
+        }
         setVolume(Math.sqrt(sum / inputData.length) * 100);
 
+        // Convert to PCM and send to Gemini
         const int16 = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) int16[i] = Math.max(-1, Math.min(1, inputData[i])) * 32767;
-        let binary = ''; const bytes = new Uint8Array(int16.buffer);
-        for (let i = 0; i < bytes.byteLength; i++) binary += String.fromCharCode(bytes[i]);
+        for (let i = 0; i < inputData.length; i++) {
+          int16[i] = Math.max(-1, Math.min(1, inputData[i])) * 32767;
+        }
+        const bytes = new Uint8Array(int16.buffer);
+        let binary = '';
+        for (let i = 0; i < bytes.byteLength; i++) {
+          binary += String.fromCharCode(bytes[i]);
+        }
 
-        sessionPromise.then(session => session.sendRealtimeInput({ media: { mimeType: 'audio/pcm;rate=16000', data: btoa(binary) } }));
+        if (session) {
+          try {
+            session.sendRealtimeInput({
+              media: {
+                mimeType: 'audio/pcm;rate=16000',
+                data: btoa(binary)
+              }
+            });
+          } catch (e) {
+            // Ignore send errors
+          }
+        }
       };
-      source.connect(processor); processor.connect(audioCtx.destination);
-    } catch (e) { alert("Could not connect. Check mic."); }
+
+      // CRITICAL: Don't connect processor to destination - this causes feedback!
+      // Only connect source to processor for processing, don't play it back
+      source.connect(processor);
+      // Remove: processor.connect(audioCtx.destination);
+    } catch (e) {
+      console.error('Connection error:', e);
+      alert("Could not connect. Check mic permission.");
+      await disconnect();
+    } finally {
+      isConnectingRef.current = false;
+    }
   };
 
-  const disconnect = () => {
+  const disconnect = async () => {
+    console.log('Disconnecting live session...');
     setConnected(false);
-    if (processorRef.current) { processorRef.current.disconnect(); processorRef.current = null; }
-    if (streamRef.current) { streamRef.current.getTracks().forEach(t => t.stop()); streamRef.current = null; }
-    if (audioContextRef.current) { audioContextRef.current.close(); audioContextRef.current = null; }
+
+    // Close live session
+    if (sessionRef.current) {
+      try {
+        await sessionRef.current.close();
+      } catch (e) {
+        console.warn('Error closing session:', e);
+      }
+      sessionRef.current = null;
+    }
+
+    // Disconnect audio processor
+    if (processorRef.current) {
+      processorRef.current.disconnect();
+      processorRef.current.onaudioprocess = null;
+      processorRef.current = null;
+    }
+
+    // Stop mic stream
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(t => t.stop());
+      streamRef.current = null;
+    }
+
+    // Close audio context
+    if (audioContextRef.current) {
+      try {
+        await audioContextRef.current.close();
+      } catch (e) {
+        console.warn('Error closing audio context:', e);
+      }
+      audioContextRef.current = null;
+    }
+
+    setVolume(0);
   };
 
   return (

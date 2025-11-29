@@ -32,16 +32,26 @@ const getAudioContext = () => {
     return globalAudioCtx;
 };
 
-export const playPCMAudio = async (base64: string) => {
-    try {
-        const audioCtx = getAudioContext();
-        const pcmData = base64ToUint8Array(base64);
-        const buffer = await pcmToAudioBuffer(pcmData, audioCtx, 24000, 1);
-        const source = audioCtx.createBufferSource();
-        source.buffer = buffer;
-        source.connect(audioCtx.destination);
-        source.start();
-    } catch (e) { console.error("Audio playback failed", e); }
+export const playPCMAudio = async (base64: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+        try {
+            const audioCtx = getAudioContext();
+            const pcmData = base64ToUint8Array(base64);
+            pcmToAudioBuffer(pcmData, audioCtx, 24000, 1).then(buffer => {
+                const source = audioCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(audioCtx.destination);
+
+                // Resolve when audio finishes playing
+                source.onended = () => resolve();
+
+                source.start();
+            }).catch(reject);
+        } catch (e) {
+            console.error("Audio playback failed", e);
+            reject(e);
+        }
+    });
 };
 
 export const playGameSound = (type: 'success' | 'error' | 'click' | 'win' | 'flip') => {
