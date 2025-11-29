@@ -960,7 +960,7 @@ const LiveChat = () => {
       // Clean up any existing session first
       await disconnect();
 
-      const client = new GoogleGenAI({ apiKey: process.env.API_KEY });
+      const client = getGeminiClient();
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       streamRef.current = stream;
 
@@ -978,7 +978,7 @@ const LiveChat = () => {
       processorRef.current = processor;
 
       const session = await client.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+        model: 'gemini-2.5-flash-native-audio-preview-09-2025', // Keeping the specific preview model for Live API stability
         config: {
           responseModalities: [Modality.AUDIO],
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } },

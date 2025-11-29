@@ -20,67 +20,42 @@ export const blobToBase64 = (blob: Blob): Promise<string> => {
 
 export const getGeminiClient = getClient;
 
-// 1. Smart Chat (Gemini API)
+// 1. Smart Chat (Gemini 3.0 Pro with Thinking)
 export const generateTutorResponse = async (userText: string): Promise<string> => {
-  if (!process.env.API_KEY) {
-    return "⚠️ API Key missing. Please add GEMINI_API_KEY to your .env.local file and restart the server.";
-  }
+  if (!process.env.API_KEY) return "API Key missing.";
 
   try {
     const ai = getClient();
-    const model = 'gemini-2.5-flash'; // Using Gemini 2.5 Flash
-    const prompt = `You are 'Chike', an expert Igbo language tutor passionate about teaching the Igbo language.
+    const model = 'gemini-2.5-flash';
+    const prompt = `You are 'Chike', a native Igbo language tutor. 
+    User input: "${userText}"
+    
+    Instructions:
+    1. If the user writes in English, translate it to Igbo and explain briefly.
+    2. If the user writes in Igbo, correct any grammar mistakes.
+    3. CRITICAL: When writing Igbo words, you MUST use correct standard Igbo diacritics (dots under ọ, ụ, ị) and tone markings where necessary to help with pronunciation.
+    4. Prioritize Central Igbo dialect.
+    5. Reply in a helpful, encouraging tone.`;
 
-USER MESSAGE: "${userText}"
-
-YOUR TEACHING APPROACH:
-1. **For English input**: Translate to Igbo, explain meaning, and teach pronunciation
-   - Always use proper Igbo diacritics (ọ, ụ, ị, ṅ, m̄)
-   - Break down complex words
-   - Give usage examples
-
-2. **For Igbo input**: Praise their effort, offer corrections if needed
-   - Gently correct grammar/spelling
-   - Suggest more natural phrasing
-   - Explain tones when relevant
-
-3. **Teaching Focus**:
-   - Use Central Igbo dialect (standard)
-   - Keep responses concise (2-3 sentences max)
-   - Be encouraging and patient
-   - Include cultural context when helpful
-
-4. **Format**:
-   - Use proper Igbo orthography
-   - Show tone marks for difficult words
-   - Give literal translations when useful
-
-Remember: You're teaching, not just translating. Help them understand WHY, not just WHAT.`;
-
+    // Enable thinking for complex tutoring
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: model,
       contents: prompt,
       config: {
-        thinkingConfig: { thinkingBudget: 1024 },
-      },
+        thinkingConfig: { thinkingBudget: 1024 }, // Set a budget for reasoning
+      }
     });
 
     return response.text || "Ndo (Sorry), I couldn't understand that.";
-  } catch (error: any) {
+  } catch (error) {
     console.error("Gemini API Error:", error);
-    if (error?.message?.includes('API_KEY')) {
-      return "⚠️ API Key error. Please check your .env.local file has GEMINI_API_KEY set correctly.";
-    }
     return "Network error. Please try again later.";
   }
 };
 
 // 2. Generate Speech (TTS)
 export const generateIgboSpeech = async (text: string): Promise<string | null> => {
-  if (!process.env.API_KEY) {
-    console.warn("API Key missing for TTS");
-    return null;
-  }
+  if (!process.env.API_KEY) return null;
 
   try {
     const ai = getClient();
@@ -91,16 +66,13 @@ export const generateIgboSpeech = async (text: string): Promise<string | null> =
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Zephyr' }, // Puck voice for better compatibility
+            prebuiltVoiceConfig: { voiceName: 'Zephyr' },
           },
         },
       },
     });
 
     const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
-    if (!base64Audio) {
-      console.error("No audio data returned from TTS");
-    }
     return base64Audio || null;
   } catch (error) {
     console.error("TTS Error:", error);
@@ -153,8 +125,8 @@ export const analyzePronunciation = async (targetPhrase: string, userTranscript:
        {
          "user_said_igbo": "Transcribe what the user actually said in Igbo (or 'N/A' if completely wrong)",
          "user_said_english": "Translate what the user said to English",
-         "feedback": "Specific advice on pronunciation, tone, or grammar. Keep it short and encouraging."
-        
+         "feedback": "Specific advice on pronunciation, tone, or grammar. Keep it short and encouraging.",
+         "score": number (0-100 based on accuracy)
        }
      `;
 
