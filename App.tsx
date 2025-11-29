@@ -940,6 +940,7 @@ const FlashcardWrapper = () => {
 const LiveChat = () => {
   const [connected, setConnected] = useState(false);
   const [volume, setVolume] = useState(0);
+  const [transcript, setTranscript] = useState('');
   const audioContextRef = useRef<AudioContext | null>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const processorRef = useRef<ScriptProcessorNode | null>(null);
@@ -978,9 +979,9 @@ const LiveChat = () => {
       processorRef.current = processor;
 
       const session = await client.live.connect({
-        model: 'gemini-2.5-flash-native-audio-preview-09-2025', // Keeping the specific preview model for Live API stability
+        model: 'gemini-2.5-flash-native-audio-preview-09-2025',
         config: {
-          responseModalities: [Modality.AUDIO],
+          responseModalities: [Modality.AUDIO, Modality.TEXT], // Enable Text for transcription
           speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } } },
           systemInstruction: { parts: [{ text: "You are Chike, a friendly and educational Igbo language tutor. You speak English with a Nigerian accent. You teach users basic Igbo phrases. Keep your responses concise and helpful for learners. Always encourage them." }] }
         },
@@ -988,9 +989,16 @@ const LiveChat = () => {
           onopen: () => {
             console.log('Live session connected');
             setConnected(true);
+            setTranscript('');
           },
           onmessage: async (message: LiveServerMessage) => {
             const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+            const textPart = message.serverContent?.modelTurn?.parts?.find(p => p.text)?.text;
+
+            if (textPart) {
+              setTranscript(prev => prev + (prev ? ' ' : '') + textPart);
+            }
+
             if (base64Audio) {
               console.log('Received audio from Gemini');
               await playPCMAudio(base64Audio);
@@ -1104,6 +1112,13 @@ const LiveChat = () => {
       </div>
       <h3 className="text-2xl font-bold text-gray-800 mb-2">{connected ? 'Live with Chike' : 'Start Live Session'}</h3>
       <p className="text-gray-500 mb-8 max-w-xs">{connected ? 'Speak naturally. Chike is listening.' : 'Practice conversation with a real-time AI tutor.'}</p>
+
+      {connected && transcript && (
+        <div className="mb-8 p-4 bg-white rounded-xl shadow-sm border border-gray-100 max-w-sm w-full max-h-32 overflow-y-auto">
+          <p className="text-gray-700 text-sm font-medium">{transcript}</p>
+        </div>
+      )}
+
       {!connected ? <button onClick={connect} className="bg-primary text-white font-bold px-8 py-3 rounded-full shadow-lg hover:bg-orange-600 hover:scale-105 transition-all">Connect</button> : <button onClick={disconnect} className="bg-gray-200 text-gray-700 font-bold px-8 py-3 rounded-full hover:bg-gray-300 transition-all">End Call</button>}
     </div>
   );
