@@ -166,6 +166,27 @@ export const IGBO_ALPHABET_FULL = [
   "A", "B", "CH", "D", "E", "F", "G", "GB", "GH", "GW", "H", "I", "Ị", "J", "K", "KP", "KW", "L", "M", "N", "Ṅ", "NW", "NY", "O", "Ọ", "P", "R", "S", "SH", "T", "U", "Ụ", "V", "W", "Y", "Z"
 ];
 
+// Igbo Numbers
+export const IGBO_NUMBERS = [
+  { number: "1", word: "Otu" },
+  { number: "2", word: "Abụọ" },
+  { number: "3", word: "Atọ" },
+  { number: "4", word: "Anọ" },
+  { number: "5", word: "Ise" },
+  { number: "6", word: "Isii" },
+  { number: "7", word: "Asaa" },
+  { number: "8", word: "Asatọ" },
+  { number: "9", word: "Itolu" },
+  { number: "10", word: "Iri" },
+  { number: "11", word: "Iri na otu" },
+  { number: "12", word: "Iri na abụọ" },
+  { number: "20", word: "Iri abụọ" },
+  { number: "30", word: "Iri atọ" },
+  { number: "40", word: "Iri anọ" },
+  { number: "50", word: "Iri ise" },
+  { number: "100", word: "Nari" }
+];
+
 // Memory Game Data Helper
 export const MEMORY_GAME_DATA = [
   { id: 'cat', content: 'Nwamba', type: 'text', matchId: 'cat' },
@@ -176,4 +197,18 @@ export const MEMORY_GAME_DATA = [
   { id: 'bird-img', content: 'https://images.unsplash.com/photo-1444464666168-49d633b86797?auto=format&fit=crop&q=80&w=300', type: 'image', matchId: 'bird' },
   { id: 'car', content: 'Ugbọ ala', type: 'text', matchId: 'car' },
   { id: 'car-img', content: 'https://images.unsplash.com/photo-1532974297617-c0f05fe48bff?auto=format&fit=crop&q=80&w=300', type: 'image', matchId: 'car' },
+];
+
+export const WORKBOOKS = [
+  { id: 'wk1', title: 'Igbo Basics Level 1', pages: 5, cover: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=300' },
+  { id: 'wk2', title: 'Writing Practice', pages: 8, cover: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=300' },
+  { id: 'wk3', title: 'Fun with Colors', pages: 4, cover: 'https://images.unsplash.com/photo-1502691876148-a84978e59af8?auto=format&fit=crop&q=80&w=300' }
+];
+
+export const FUN_FACTS = [
+  "Did you know? The Igbo week has four days: Eke, Orie, Afọ, and Nkwọ.",
+  "Igbo language uses tones to differentiate meaning. High, Low, and Mid tones matter!",
+  "New Yam Festival (Iri Ji) is one of the most important cultural celebrations in Igboland.",
+  "The Kola nut (Ọjị) is a symbol of hospitality and is always broken with prayer.",
+  "Igbo proverbs are considered the 'palm oil with which words are eaten'."
 ];

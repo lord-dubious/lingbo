@@ -72,8 +72,13 @@ export interface AnalysisResult {
   score: number;
 }
 
+export type ProfileType = 'adult' | 'kid';
+
 export interface UserProfile {
+  id: string;
   name: string;
+  type: ProfileType;
+  avatar?: string;
   joinedDate: string;
   streak: number;
   level: number;

@@ -2,8 +2,8 @@
 import { GoogleGenAI, GenerateContentResponse, Modality } from "@google/genai";
 import { AnalysisResult } from "../types";
 
-// Initialize the client.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+// Initialize the client factory
+const getClient = () => new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
 
 // Helper to convert blob to base64
 export const blobToBase64 = (blob: Blob): Promise<string> => {
@@ -18,13 +18,14 @@ export const blobToBase64 = (blob: Blob): Promise<string> => {
   });
 };
 
-export const getGeminiClient = () => ai;
+export const getGeminiClient = getClient;
 
-// 1. Smart Chat (Gemini 3.0 Pro)
+// 1. Smart Chat (Gemini 3.0 Pro with Thinking)
 export const generateTutorResponse = async (userText: string): Promise<string> => {
   if (!process.env.API_KEY) return "API Key missing.";
 
   try {
+    const ai = getClient();
     const model = 'gemini-3-pro-preview'; 
     const prompt = `You are 'Chike', a native Igbo language tutor. 
     User input: "${userText}"
@@ -36,9 +37,13 @@ export const generateTutorResponse = async (userText: string): Promise<string> =
     4. Prioritize Central Igbo dialect.
     5. Reply in a helpful, encouraging tone.`;
 
+    // Enable thinking for complex tutoring
     const response: GenerateContentResponse = await ai.models.generateContent({
       model: model,
       contents: prompt,
+      config: {
+        thinkingConfig: { thinkingBudget: 1024 }, // Set a budget for reasoning
+      }
     });
 
     return response.text || "Ndo (Sorry), I couldn't understand that.";
@@ -53,6 +58,7 @@ export const generateIgboSpeech = async (text: string): Promise<string | null> =
   if (!process.env.API_KEY) return null;
   
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
       contents: [{ parts: [{ text: text }] }],
@@ -60,7 +66,7 @@ export const generateIgboSpeech = async (text: string): Promise<string | null> =
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
-            prebuiltVoiceConfig: { voiceName: 'Zephyr' }, // Zephyr often handles accents well
+            prebuiltVoiceConfig: { voiceName: 'Zephyr' }, 
           },
         },
       },
@@ -74,11 +80,12 @@ export const generateIgboSpeech = async (text: string): Promise<string | null> =
   }
 };
 
-// 3. Transcribe Audio (STT)
+// 3. Transcribe Audio (STT) - Using Flash
 export const transcribeUserAudio = async (audioBase64: string, mimeType: string = 'audio/wav'): Promise<string> => {
   if (!process.env.API_KEY) return "Error: No API Key";
 
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: {
@@ -106,6 +113,7 @@ export const analyzePronunciation = async (targetPhrase: string, userTranscript:
    if (!process.env.API_KEY) return null;
    
    try {
+     const ai = getClient();
      const prompt = `
        Role: Igbo Language Teacher.
        Task: Compare the User's Audio Transcript to the Target Phrase.
