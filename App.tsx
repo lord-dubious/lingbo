@@ -175,7 +175,7 @@ const Onboarding = () => {
       title: "Nnọ! Welcome",
       subtitle: "A language for generations.",
       desc: "Your journey to mastering the Igbo Language starts here",
-      image: "/assets/images/lingbo_logo_main.png"
+      image: APP_LOGO
     },
     {
       title: "Learn Naturally",
