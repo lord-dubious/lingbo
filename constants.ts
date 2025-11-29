@@ -1,4 +1,3 @@
-
 import { CurriculumLevel, Flashcard, BookResource, KidGame, VideoResource, Achievement } from './types';
 
 export const ADULT_CURRICULUM: CurriculumLevel[] = [
@@ -30,8 +29,8 @@ export const ADULT_CURRICULUM: CurriculumLevel[] = [
             instruction: "Tap the image for 'Welcome' (Nno)",
             audio_cue: "nno.mp3",
             options: [
-              "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=300", 
-              "https://images.unsplash.com/photo-1596727147705-54a71280ddcc?auto=format&fit=crop&q=80&w=300", 
+              "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?auto=format&fit=crop&q=80&w=300",
+              "https://images.unsplash.com/photo-1596727147705-54a71280ddcc?auto=format&fit=crop&q=80&w=300",
               "https://images.unsplash.com/photo-1470252649378-9c29740c9fa8?auto=format&fit=crop&q=80&w=300"
             ],
             correct_answer: "https://images.unsplash.com/photo-1596727147705-54a71280ddcc?auto=format&fit=crop&q=80&w=300"
@@ -40,9 +39,9 @@ export const ADULT_CURRICULUM: CurriculumLevel[] = [
       }
     ]
   },
-  { 
-    level_id: 2, 
-    title: "Family (Ezi na Ulo)", 
+  {
+    level_id: 2,
+    title: "Family (Ezi na Ulo)",
     status: 'in_progress',
     description: "Words for father, mother, and siblings.",
     lessons: [
@@ -59,46 +58,46 @@ export const ADULT_CURRICULUM: CurriculumLevel[] = [
         type: "quiz_section",
         activities: [
           {
-             quiz_type: "multiple_choice_3_options",
-             question: "Translate 'Mother' to Igbo:",
-             options: ["Nna", "Nne", "Nwa"],
-             correct_answer: "Nne"
+            quiz_type: "multiple_choice_3_options",
+            question: "Translate 'Mother' to Igbo:",
+            options: ["Nna", "Nne", "Nwa"],
+            correct_answer: "Nne"
           },
           {
-             quiz_type: "multiple_choice_3_options",
-             question: "What does 'Nna' mean?",
-             options: ["Father", "Mother", "Friend"],
-             correct_answer: "Father"
+            quiz_type: "multiple_choice_3_options",
+            question: "What does 'Nna' mean?",
+            options: ["Father", "Mother", "Friend"],
+            correct_answer: "Father"
           }
         ]
       }
     ]
   },
-  { 
-    level_id: 3, 
-    title: "Food (Nri)", 
-    status: 'in_progress', 
+  {
+    level_id: 3,
+    title: "Food (Nri)",
+    status: 'in_progress',
     description: "Common foods and eating.",
     lessons: [
-       {
-         type: "vocabulary",
-         data: [
-           { "english": "Water", "igbo": "Mmiri", "image": "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=300" },
-           { "english": "Yam", "igbo": "Ji", "image": "https://images.unsplash.com/photo-1596097635121-14b63b7a0c19?auto=format&fit=crop&q=80&w=300" }, // Sweet potatoes/Yam
-           { "english": "Rice", "igbo": "Osikapa", "image": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&q=80&w=300" } // Rice bowl
-         ]
-       },
-       {
+      {
+        type: "vocabulary",
+        data: [
+          { "english": "Water", "igbo": "Mmiri", "image": "https://images.unsplash.com/photo-1548839140-29a749e1cf4d?auto=format&fit=crop&q=80&w=300" },
+          { "english": "Yam", "igbo": "Ji", "image": "https://images.unsplash.com/photo-1596097635121-14b63b7a0c19?auto=format&fit=crop&q=80&w=300" }, // Sweet potatoes/Yam
+          { "english": "Rice", "igbo": "Osikapa", "image": "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&q=80&w=300" } // Rice bowl
+        ]
+      },
+      {
         type: "quiz_section",
         activities: [
           {
-             quiz_type: "multiple_choice_3_options",
-             question: "Translate 'Water' to Igbo:",
-             options: ["Ji", "Mmiri", "Ofe"],
-             correct_answer: "Mmiri"
+            quiz_type: "multiple_choice_3_options",
+            question: "Translate 'Water' to Igbo:",
+            options: ["Ji", "Mmiri", "Ofe"],
+            correct_answer: "Mmiri"
           }
         ]
-       }
+      }
     ]
   },
   { level_id: 4, title: "Places (Ebe Dị Iche Iche)", status: 'locked', description: "School, Market, Church, Home." },
@@ -128,7 +127,7 @@ export const KIDS_GAMES: KidGame[] = [
   {
     game_id: "memory_match",
     logic: "Flip cards to find pairs",
-    example_round: {} 
+    example_round: {}
   },
   {
     game_id: "speed_tap",
@@ -199,10 +198,14 @@ export const MEMORY_GAME_DATA = [
   { id: 'car-img', content: 'https://images.unsplash.com/photo-1532974297617-c0f05fe48bff?auto=format&fit=crop&q=80&w=300', type: 'image', matchId: 'car' },
 ];
 
-export const WORKBOOKS = [
-  { id: 'wk1', title: 'Igbo Basics Level 1', pages: 5, cover: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=300' },
-  { id: 'wk2', title: 'Writing Practice', pages: 8, cover: 'https://images.unsplash.com/photo-1455390582262-044cdead277a?auto=format&fit=crop&q=80&w=300' },
-  { id: 'wk3', title: 'Fun with Colors', pages: 4, cover: 'https://images.unsplash.com/photo-1502691876148-a84978e59af8?auto=format&fit=crop&q=80&w=300' }
+export const WORKSHEETS = [
+  {
+    id: 'wk1',
+    title: 'The Book of Opposites',
+    pages: 20,
+    pdfPath: '/assets/workbooks/THE_BOOK_OF_OPPOSITES .pdf',
+    cover: 'https://images.unsplash.com/photo-1503676260728-1c00da094a0b?auto=format&fit=crop&q=80&w=300'
+  }
 ];
 
 export const FUN_FACTS = [
