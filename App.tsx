@@ -49,6 +49,7 @@ import { GoogleGenAI, LiveServerMessage, Modality } from '@google/genai';
 import Layout from './components/Layout';
 import IgboKeyboard from './components/IgboKeyboard';
 import WorksheetFlipbook from './components/WorksheetFlipbook';
+import TracingCanvas from './components/TracingCanvas';
 import { ADULT_CURRICULUM, KIDS_FLASHCARDS, KIDS_GAMES, LIBRARY_BOOKS, VIDEO_RESOURCES, IGBO_ALPHABET_FULL, ACHIEVEMENTS, MEMORY_GAME_DATA, IGBO_NUMBERS, WORKSHEETS, FUN_FACTS } from './constants';
 import {
   generateTutorResponse,
@@ -59,7 +60,7 @@ import {
   getGeminiClient
 } from './services/geminiService';
 import { playPCMAudio, playGameSound } from './services/audioService';
-import { ChatMessage, VideoResource, AnalysisResult, UserProfile, ProfileType } from './types';
+import { ChatMessage, VideoResource, AnalysisResult, UserProfile, ProfileType, QuizItem } from './types';
 
 const APP_LOGO = new URL('./assets/images/lingbo_logo_main.png', import.meta.url).href;
 
@@ -599,161 +600,216 @@ const AdultDashboard = () => {
 type KidsSectionId = 'activities' | 'videos' | 'stories' | 'worksheets';
 
 const kidsSections: { id: KidsSectionId; title: string; blurb: string; icon: React.ComponentType<{ size?: number }>; accent: string }[] = [
-  { id: 'activities', title: 'Play & Learn', blurb: 'Games, songs, and chats with Chike.', icon: Gamepad2, accent: 'bg-orange-100 text-orange-600' },
-  { id: 'videos', title: 'Video Time', blurb: 'Dance and sing with Igbo videos.', icon: PlayCircle, accent: 'bg-blue-100 text-blue-600' },
-  { id: 'stories', title: 'Story Books', blurb: 'Colorful books to read with family.', icon: BookOpen, accent: 'bg-green-100 text-green-600' },
-  { id: 'worksheets', title: 'Worksheets', blurb: 'Print-and-play tracing sheets.', icon: FileText, accent: 'bg-purple-100 text-purple-600' }
+  { id: 'activities', title: 'Play', blurb: 'Fun games!', icon: Gamepad2, accent: 'bg-orange-100 text-orange-600' },
+  { id: 'videos', title: 'Watch', blurb: 'Cool videos!', icon: PlayCircle, accent: 'bg-blue-100 text-blue-600' },
+  { id: 'stories', title: 'Read', blurb: 'Story books!', icon: BookOpen, accent: 'bg-green-100 text-green-600' },
+  { id: 'worksheets', title: 'Draw', blurb: 'Color & Trace!', icon: FileText, accent: 'bg-purple-100 text-purple-600' }
 ];
 
 const KidsDashboard = () => {
   const navigate = useNavigate();
   const { activeProfile } = useUser();
-  const [openSection, setOpenSection] = useState<KidsSectionId>('activities');
+  const [activeSection, setActiveSection] = useState<KidsSectionId | null>(null);
 
   const activities = [
-    { title: 'Flashcards', icon: ImageIcon, path: '/kids/game/words' },
-    { title: 'Sentence Builder', icon: Puzzle, path: '/kids/game/sentence' },
-    { title: 'Memory Match', icon: Zap, path: '/kids/game/memory' },
-    { title: 'Speed Tap', icon: Timer, path: '/kids/game/speed' },
-    { title: 'Alphabet Sounds', icon: Type, path: '/alphabet' },
-    { title: 'Number Sounds', icon: Hash, path: '/numbers' },
-    { title: 'Chat with Chike', icon: Mic, path: '/practice' }
+    { title: 'Words', icon: ImageIcon, path: '/kids/game/words', color: 'bg-orange-100 text-orange-600' },
+    { title: 'Build', icon: Puzzle, path: '/kids/game/sentence', color: 'bg-pink-100 text-pink-600' },
+    { title: 'Match', icon: Zap, path: '/kids/game/memory', color: 'bg-purple-100 text-purple-600' },
+    { title: 'Tap', icon: Timer, path: '/kids/game/speed', color: 'bg-yellow-100 text-yellow-600' },
+    { title: 'ABC', icon: Type, path: '/alphabet', color: 'bg-blue-100 text-blue-600' },
+    { title: '123', icon: Hash, path: '/numbers', color: 'bg-green-100 text-green-600' },
+    { title: 'Talk', icon: Mic, path: '/practice', color: 'bg-red-100 text-red-600' }
   ];
 
-  const renderSectionContent = (section: KidsSectionId) => {
-    if (section === 'activities') {
+  const renderSectionContent = () => {
+    if (activeSection === 'activities') {
       return (
-        <div className="grid grid-cols-2 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4 animate-in fade-in slide-in-from-bottom-4">
           {activities.map(activity => (
             <button
               key={activity.title}
               onClick={() => navigate(activity.path)}
-              className="bg-orange-50 hover:bg-orange-100 rounded-2xl px-3 py-3 flex items-center gap-3 text-left transition-colors"
+              className="bg-white border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 rounded-3xl p-6 flex flex-col items-center gap-4 shadow-sm hover:shadow-md transition-all"
             >
-              <activity.icon size={20} className="text-orange-500" />
-              <span className="font-bold text-sm text-gray-700">{activity.title}</span>
+              <div className={`w-16 h-16 rounded-2xl flex items-center justify-center text-3xl ${activity.color} group-hover:scale-110 group-hover:animate-bounce transition-transform`}>
+                <activity.icon size={32} />
+              </div>
+              <span className="font-kids font-bold text-lg text-gray-700 text-center">{activity.title}</span>
             </button>
           ))}
         </div>
       );
     }
 
-    if (section === 'videos') {
+    if (activeSection === 'videos') {
       return (
-        <div className="space-y-3">
-          <p className="text-sm text-gray-600">Short clips that teach Igbo words, numbers, and songs.</p>
-          <button onClick={() => navigate('/videos')} className="px-4 py-2 bg-blue-500 text-white rounded-full font-bold shadow hover:bg-blue-600">Open Video Library</button>
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+          <div className="bg-blue-50 rounded-3xl p-8 text-center border-2 border-dashed border-blue-200">
+            <PlayCircle size={64} className="mx-auto text-blue-400 mb-4" />
+            <h3 className="font-kids text-2xl text-blue-800 mb-2">Watch & Learn</h3>
+            <p className="text-blue-600 mb-6">Sing along with Igbo songs and stories!</p>
+            <button onClick={() => navigate('/videos')} className="px-8 py-4 bg-blue-500 text-white rounded-full font-bold shadow-lg hover:bg-blue-600 hover:scale-105 transition-all">
+              Open Video Library
+            </button>
+          </div>
         </div>
       );
     }
 
-    if (section === 'stories') {
+    if (activeSection === 'stories') {
       const featuredBooks = LIBRARY_BOOKS.slice(0, 3);
       return (
-        <div className="space-y-3">
-          <div className="grid grid-cols-3 gap-2">
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
             {featuredBooks.map((book, idx) => (
-              <div key={idx} className="bg-green-50 rounded-2xl overflow-hidden border border-green-100">
-                <img src={book.cover} className="w-full aspect-[4/5] object-cover" />
-                <div className="p-2 text-center">
-                  <p className="text-[10px] font-bold text-green-700">{book.title}</p>
-                </div>
+              <div key={idx} className="bg-white rounded-2xl p-3 shadow-sm border border-gray-100 hover:scale-105 transition-transform">
+                <img src={book.cover} className="w-full aspect-[4/5] object-cover rounded-xl mb-3" />
+                <p className="font-kids font-bold text-gray-800 text-center text-sm">{book.title}</p>
               </div>
             ))}
           </div>
-          <button onClick={() => navigate('/library')} className="px-4 py-2 bg-green-500 text-white rounded-full font-bold shadow hover:bg-green-600">See All Books</button>
+          <div className="text-center">
+            <button onClick={() => navigate('/library')} className="px-8 py-4 bg-green-500 text-white rounded-full font-bold shadow-lg hover:bg-green-600 hover:scale-105 transition-all">
+              Go to Library
+            </button>
+          </div>
         </div>
       );
     }
 
-    return (
-      <div className="space-y-3">
-        <div className="bg-purple-50 rounded-2xl p-4 border border-dashed border-purple-200">
-          <p className="text-xs uppercase text-purple-500 font-bold">new</p>
-          <p className="font-kids text-xl text-purple-800">Alphabet Tracing</p>
-          <p className="text-sm text-purple-700">Trace every Igbo letter the right way.</p>
-          <button onClick={() => navigate('/kids/worksheet/alphabet')} className="mt-3 px-4 py-2 bg-purple-500 text-white rounded-full font-bold shadow hover:bg-purple-600">Start Tracing</button>
+    if (activeSection === 'worksheets') {
+      return (
+        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4">
+          <button
+            onClick={() => navigate('/kids/worksheet/alphabet')}
+            className="w-full bg-white border-b-4 border-purple-200 active:border-b-0 active:translate-y-1 rounded-3xl p-6 flex items-center gap-6 shadow-sm hover:shadow-md transition-all group"
+          >
+            <div className="w-20 h-20 bg-purple-100 rounded-2xl flex items-center justify-center text-purple-600 group-hover:scale-110 transition-transform">
+              <Eraser size={40} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-kids text-2xl text-gray-800 mb-1">Alphabet Tracing</h3>
+              <p className="text-gray-500">Practice writing your ABCs</p>
+            </div>
+            <ChevronRight className="ml-auto text-purple-300" size={32} />
+          </button>
+
+          <button
+            onClick={() => navigate('/library')}
+            className="w-full bg-white border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 rounded-3xl p-6 flex items-center gap-6 shadow-sm hover:shadow-md transition-all group"
+          >
+            <div className="w-20 h-20 bg-gray-100 rounded-2xl flex items-center justify-center text-gray-600 group-hover:scale-110 transition-transform">
+              <FileText size={40} />
+            </div>
+            <div className="text-left">
+              <h3 className="font-kids text-2xl text-gray-800 mb-1">Printable Worksheets</h3>
+              <p className="text-gray-500">Download and print fun activities</p>
+            </div>
+            <ChevronRight className="ml-auto text-gray-300" size={32} />
+          </button>
         </div>
-        <button onClick={() => navigate('/library')} className="w-full px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-bold border border-purple-200 hover:bg-purple-200">More Worksheets</button>
-      </div>
-    );
+      );
+    }
   };
 
   return (
-    <Layout title="Kids Corner" showBack backPath="/hub" isKidsMode hideBottomNav>
-      <div className="space-y-8">
-        <div className="flex items-center gap-4 bg-yellow-100 p-4 rounded-3xl border border-yellow-200">
-          <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-2xl shadow-sm">
-            {activeProfile?.avatar || '🐻'}
+    <Layout
+      title={activeSection ? kidsSections.find(s => s.id === activeSection)?.title : "Kids Corner"}
+      showBack={!!activeSection}
+      onBack={() => activeSection ? setActiveSection(null) : navigate('/hub')}
+      isKidsMode
+      hideBottomNav
+    >
+      {!activeSection ? (
+        <div className="space-y-8">
+          {/* Welcome Banner */}
+          <div className="flex items-center gap-4 bg-gradient-to-r from-yellow-100 to-orange-100 p-6 rounded-3xl border-2 border-yellow-200 shadow-sm">
+            <div className="w-16 h-16 bg-white rounded-full flex items-center justify-center text-4xl shadow-md animate-bounce-slow">
+              {activeProfile?.avatar || '🐻'}
+            </div>
+            <div>
+              <h2 className="font-kids font-bold text-2xl text-yellow-900">Hi, {activeProfile?.name}!</h2>
+              <p className="text-yellow-700 font-medium">What do you want to do today?</p>
+            </div>
           </div>
-          <div>
-            <h2 className="font-kids font-bold text-xl text-yellow-800">Hi, {activeProfile?.name}!</h2>
-            <p className="text-yellow-600 text-sm font-medium">Ready to play?</p>
-          </div>
-        </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          {kidsSections.map(section => (
-            <div key={section.id} className="rounded-3xl bg-white border border-gray-100 p-5 shadow-sm">
+          {/* Main Sections Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {kidsSections.map(section => (
               <button
-                onClick={() => setOpenSection(section.id)}
-                className="w-full flex items-center gap-3 text-left"
+                key={section.id}
+                onClick={() => setActiveSection(section.id)}
+                className="group relative bg-white rounded-[2rem] p-6 shadow-sm border-2 border-gray-100 hover:border-transparent hover:shadow-xl transition-all overflow-hidden text-left h-48 flex flex-col justify-between"
               >
-                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center text-2xl ${section.accent}`}>
-                  <section.icon size={24} />
+                <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-full opacity-20 transition-transform group-hover:scale-150 duration-500 ${section.accent.split(' ')[0]}`}></div>
+
+                <div className={`w-14 h-14 rounded-2xl flex items-center justify-center text-2xl shadow-sm mb-4 ${section.accent} group-hover:scale-110 group-hover:animate-bounce transition-transform duration-300`}>
+                  <section.icon size={28} />
                 </div>
-                <div>
-                  <h3 className="font-kids text-2xl text-gray-800">{section.title}</h3>
-                  <p className="text-sm text-gray-500">{section.blurb}</p>
+
+                <div className="relative z-10">
+                  <h3 className="font-kids text-2xl font-bold text-gray-800 mb-1 group-hover:text-primary transition-colors">{section.title}</h3>
+                  <p className="text-sm text-gray-500 font-medium">{section.blurb}</p>
                 </div>
               </button>
-              {openSection === section.id && (
-                <div className="mt-4 border-t border-gray-100 pt-4">
-                  {renderSectionContent(section.id)}
-                </div>
-              )}
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
-      </div>
+      ) : (
+        renderSectionContent()
+      )}
     </Layout>
   );
 };
 
 const AlphabetTracingWorksheet = () => {
   const navigate = useNavigate();
-  const handlePrint = useCallback(() => window.print(), []);
+  const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
 
   return (
-    <Layout title="Alphabet Tracing" showBack isKidsMode hideBottomNav>
+    <Layout
+      title={selectedLetter ? `Tracing: ${selectedLetter}` : "Alphabet Tracing"}
+      showBack
+      onBack={() => selectedLetter ? setSelectedLetter(null) : navigate(-1)}
+      isKidsMode
+      hideBottomNav
+    >
       <div className="space-y-6">
-        <div className="bg-white rounded-3xl border border-purple-100 p-5 shadow-sm print:hidden">
-          <h3 className="font-kids text-2xl text-purple-700 mb-2">Trace the Igbo letters</h3>
-          <p className="text-sm text-gray-600">Use a pencil or marker to follow the outlines. Start at the top of each stroke and trace slowly.</p>
-          <div className="flex flex-wrap gap-3 mt-4">
-            <button onClick={handlePrint} className="px-4 py-2 bg-purple-500 text-white rounded-full font-bold shadow hover:bg-purple-600 flex items-center gap-2">
-              <Printer size={16} /> Print Worksheet
-            </button>
-            <button onClick={() => navigate('/library')} className="px-4 py-2 bg-purple-100 text-purple-700 rounded-full font-bold border border-purple-200 hover:bg-purple-200 flex items-center gap-2">
-              <BookOpen size={16} /> More Worksheets
-            </button>
-          </div>
-        </div>
+        {!selectedLetter ? (
+          <>
+            <div className="bg-white rounded-3xl border border-purple-100 p-6 shadow-sm text-center">
+              <h3 className="font-kids text-2xl text-purple-700 mb-2">Pick a letter!</h3>
+              <p className="text-gray-500">Tap any letter to start practicing.</p>
+            </div>
 
-        <div className="bg-white rounded-3xl border-4 border-purple-100 shadow-xl p-6 print:border print:border-gray-200">
-          <div className="grid grid-cols-3 md:grid-cols-4 gap-4">
-            {IGBO_ALPHABET_FULL.map(letter => (
-              <div key={letter} className="aspect-square border-2 border-dashed border-gray-300 rounded-2xl flex items-center justify-center">
-                <span
-                  className="text-5xl md:text-6xl font-kids text-gray-400"
-                  style={{ WebkitTextStroke: '2px #cbd5f5', color: 'transparent' }}
+            <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+              {IGBO_ALPHABET_FULL.map(letter => (
+                <button
+                  key={letter}
+                  onClick={() => setSelectedLetter(letter)}
+                  className="aspect-square bg-white border-b-4 border-purple-200 active:border-b-0 active:translate-y-1 rounded-2xl flex items-center justify-center shadow-sm hover:shadow-md transition-all"
                 >
-                  {letter}
-                </span>
-              </div>
-            ))}
+                  <span className="text-2xl font-kids font-bold text-purple-600">{letter}</span>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="flex flex-col items-center animate-in zoom-in duration-300">
+            <TracingCanvas letter={selectedLetter} />
+            <div className="mt-8 text-center">
+              <p className="text-gray-500 text-sm mb-4">Trace the letter {selectedLetter} carefully!</p>
+              <button
+                onClick={() => {
+                  generateIgboSpeech(selectedLetter).then(b64 => b64 && playPCMAudio(b64));
+                }}
+                className="px-6 py-3 bg-white border border-purple-200 rounded-full text-purple-600 font-bold shadow-sm hover:bg-purple-50 flex items-center gap-2 mx-auto"
+              >
+                <Volume2 size={20} /> Hear Sound
+              </button>
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </Layout>
   );
@@ -1302,7 +1358,7 @@ const VideoLibrary = () => {
 };
 
 // Quiz Question Component (to avoid hooks in map)
-const QuizQuestion = ({ question, questionNumber, onScore }: { question: any, questionNumber: number, onScore: () => void }) => {
+const QuizQuestion: React.FC<{ question: QuizItem, questionNumber: number, onScore: () => void }> = ({ question, questionNumber, onScore }) => {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
 
   const handleAnswer = (opt: string) => {
@@ -1407,6 +1463,22 @@ const LessonView = () => {
   const level = ADULT_CURRICULUM.find(l => l.level_id === Number(id));
   const [activeTab, setActiveTab] = useState<'vocab' | 'quiz'>('vocab');
   const [quizScore, setQuizScore] = useState(0);
+  const [speakingWord, setSpeakingWord] = useState<string | null>(null);
+
+  const handleSpeakWord = useCallback(async (word: string) => {
+    if (speakingWord === word) return;
+    setSpeakingWord(word);
+    try {
+      const audio = await generateIgboSpeech(word);
+      if (audio) {
+        await playPCMAudio(audio);
+      }
+    } catch (err) {
+      console.error('TTS failed', err);
+    } finally {
+      setSpeakingWord(null);
+    }
+  }, [speakingWord]);
 
   if (!level) return <Navigate to="/adults" />;
 
@@ -1424,7 +1496,7 @@ const LessonView = () => {
       </div>
 
       {activeTab === 'vocab' && vocabLesson && (
-        <div className="space-y-4 animate-in fade-in slide-in-from-bottom-2">
+        <div className="space-y-4">
           {vocabLesson.data?.map((item, i) => (
             <div key={i} className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex items-center gap-4">
               <img src={item.image} className="w-16 h-16 rounded-lg object-cover bg-gray-200" alt={item.english} />
@@ -1445,7 +1517,7 @@ const LessonView = () => {
       )}
 
       {activeTab === 'quiz' && quizLesson && (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2">
+        <div className="space-y-6">
           <div className="text-center p-4 bg-orange-50 rounded-xl border border-orange-100"><Trophy className="inline mb-1 text-orange-500" size={20} /> <span className="font-bold text-orange-700">Quiz Score: {quizScore}</span></div>
           {quizLesson.activities?.map((q, i) => (
             <QuizQuestion

@@ -1,6 +1,6 @@
 import { CurriculumLevel, Flashcard, BookResource, KidGame, VideoResource, Achievement } from './types';
 
-const WORKBOOK_OPPOSITES_PDF = new URL('./assets/workbooks/THE_BOOK_OF_OPPOSITES .pdf', import.meta.url).href;
+const WORKBOOK_OPPOSITES_PDF = new URL('./assets/workbooks/THE_BOOK_OF_OPPOSITES.pdf', import.meta.url).href;
 
 export const ADULT_CURRICULUM: CurriculumLevel[] = [
   {
