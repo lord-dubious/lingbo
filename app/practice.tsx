@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity } from 'react-native';
+import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { Mic, Square } from 'lucide-react-native';
 import { styled } from 'nativewind';
 import Layout from '../components/Layout';
@@ -15,7 +15,13 @@ export default function SpeakPractice() {
 
     async function startRecording() {
         try {
-            await Audio.requestPermissionsAsync();
+            const permission = await Audio.requestPermissionsAsync();
+
+            if (permission.status !== 'granted') {
+                Alert.alert("Permission required", "Please grant microphone access to practice speaking.");
+                return;
+            }
+
             await Audio.setAudioModeAsync({
                 allowsRecordingIOS: true,
                 playsInSilentModeIOS: true,
@@ -28,16 +34,24 @@ export default function SpeakPractice() {
             setIsRecording(true);
         } catch (err) {
             console.error('Failed to start recording', err);
+            Alert.alert("Error", "Could not start recording.");
         }
     }
 
     async function stopRecording() {
-        setRecording(null);
-        setIsRecording(false);
-        if (recording) {
+        if (!recording) return;
+
+        try {
             await recording.stopAndUnloadAsync();
-            // const uri = recording.getURI();
-            // Here you would send uri to backend or analyze it
+            const uri = recording.getURI();
+            // In a real app, you would play this back or send it to an API.
+            console.log('Recording stored at', uri);
+            Alert.alert("Recorded!", "Great job practicing!");
+        } catch (error) {
+            console.error(error);
+        } finally {
+            setRecording(null);
+            setIsRecording(false);
         }
     }
 
