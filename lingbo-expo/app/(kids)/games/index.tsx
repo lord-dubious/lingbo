@@ -8,6 +8,7 @@ import {
     SafeAreaView,
     ScrollView
 } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import {
     Puzzle,
     Sparkles,
@@ -20,7 +21,7 @@ import {
 interface Game {
     title: string;
     icon: any;
-    color: string;
+    colors: [string, string];
     borderColor: string;
     path: string;
 }
@@ -29,10 +30,34 @@ export default function GamesMenu() {
     const router = useRouter();
 
     const games: Game[] = [
-        { title: "Sentence Puzzle", icon: Puzzle, color: "#fb923c", borderColor: "#ea580c", path: "/(kids)/games/sentence" },
-        { title: "Memory Match", icon: Sparkles, color: "#22d3ee", borderColor: "#0891b2", path: "/(kids)/games/memory" },
-        { title: "Speed Tap", icon: Timer, color: "#818cf8", borderColor: "#4f46e5", path: "/(kids)/games/speed" },
-        { title: "Word Flash", icon: ImageIcon, color: "#f472b6", borderColor: "#db2777", path: "/(kids)/games/words" }
+        {
+            title: "Sentence Puzzle",
+            icon: Puzzle,
+            colors: ['#fb923c', '#ea580c'],
+            borderColor: '#c2410c',
+            path: "/(kids)/games/sentence"
+        },
+        {
+            title: "Memory Match",
+            icon: Sparkles,
+            colors: ['#22d3ee', '#0891b2'],
+            borderColor: '#0e7490',
+            path: "/(kids)/games/memory"
+        },
+        {
+            title: "Speed Tap",
+            icon: Timer,
+            colors: ['#818cf8', '#6366f1'],
+            borderColor: '#4338ca',
+            path: "/(kids)/games/speed"
+        },
+        {
+            title: "Word Flash",
+            icon: ImageIcon,
+            colors: ['#f472b6', '#db2777'],
+            borderColor: '#be185d',
+            path: "/(kids)/games/words"
+        }
     ];
 
     return (
@@ -57,22 +82,26 @@ export default function GamesMenu() {
                         <TouchableOpacity
                             key={i}
                             onPress={() => router.push(game.path as any)}
-                            style={[
-                                styles.gameCard,
-                                { backgroundColor: game.color, borderBottomColor: game.borderColor }
-                            ]}
-                            activeOpacity={0.8}
+                            style={[styles.gameCard, { borderBottomColor: game.borderColor }]}
+                            activeOpacity={0.9}
                         >
-                            <View style={styles.iconContainer}>
-                                <IconComponent size={32} color="white" />
-                            </View>
-                            <View style={styles.gameInfo}>
-                                <Text style={styles.gameTitle}>{game.title}</Text>
-                                <Text style={styles.gameSubtitle}>Tap to play!</Text>
-                            </View>
-                            <View style={styles.playButton}>
-                                <Play size={24} color="white" fill="white" />
-                            </View>
+                            <LinearGradient
+                                colors={game.colors}
+                                start={{ x: 0, y: 0 }}
+                                end={{ x: 1, y: 1 }}
+                                style={styles.gameCardGradient}
+                            >
+                                <View style={styles.iconContainer}>
+                                    <IconComponent size={32} color="white" />
+                                </View>
+                                <View style={styles.gameInfo}>
+                                    <Text style={styles.gameTitle}>{game.title}</Text>
+                                    <Text style={styles.gameSubtitle}>Tap to play!</Text>
+                                </View>
+                                <View style={styles.playButton}>
+                                    <Play size={24} color="white" fill="white" />
+                                </View>
+                            </LinearGradient>
                         </TouchableOpacity>
                     );
                 })}
@@ -120,22 +149,25 @@ const styles = StyleSheet.create({
         paddingBottom: 32,
     },
     gameCard: {
+        borderRadius: 24,
+        overflow: 'hidden',
+        borderBottomWidth: 8,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.2,
+        shadowRadius: 12,
+        elevation: 8,
+    },
+    gameCardGradient: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: 24,
-        borderRadius: 24,
-        borderBottomWidth: 8,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 6,
         gap: 24,
     },
     iconContainer: {
         backgroundColor: 'rgba(255,255,255,0.25)',
         padding: 16,
-        borderRadius: 16,
+        borderRadius: 20,
     },
     gameInfo: {
         flex: 1,
@@ -144,6 +176,7 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
+        marginBottom: 4,
     },
     gameSubtitle: {
         fontSize: 14,
@@ -152,7 +185,7 @@ const styles = StyleSheet.create({
     },
     playButton: {
         backgroundColor: 'rgba(255,255,255,0.2)',
-        padding: 12,
-        borderRadius: 24,
+        padding: 14,
+        borderRadius: 28,
     },
 });

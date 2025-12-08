@@ -5,6 +5,7 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
+    SafeAreaView,
     ScrollView
 } from 'react-native';
 import {
@@ -14,8 +15,8 @@ import {
     Type,
     Hash,
     Pencil,
+    ArrowLeft,
 } from 'lucide-react-native';
-import Layout from '@/components/Layout';
 import { useUser } from '@/context/UserContext';
 
 interface MenuItem {
@@ -41,16 +42,25 @@ export default function KidsDashboard() {
     ];
 
     return (
-        <Layout title="Kids Corner" showBack backPath="/hub" isKidsMode>
+        <SafeAreaView style={styles.container}>
+            {/* Header */}
+            <View style={styles.header}>
+                <TouchableOpacity onPress={() => router.push('/hub')} style={styles.backButton}>
+                    <ArrowLeft size={24} color="#374151" />
+                </TouchableOpacity>
+                <Text style={styles.headerTitle}>Kids Corner</Text>
+                <View style={{ width: 44 }} />
+            </View>
+
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.content}
             >
-                {/* Greeting */}
+                {/* Greeting Card */}
                 <View style={styles.greetingCard}>
                     <Text style={styles.avatar}>{activeProfile?.avatar || '🐻'}</Text>
                     <View>
-                        <Text style={styles.greetingTitle}>Hi, {activeProfile?.name}!</Text>
+                        <Text style={styles.greetingTitle}>Hi, {activeProfile?.name || 'Friend'}!</Text>
                         <Text style={styles.greetingSubtitle}>What do you want to do?</Text>
                     </View>
                 </View>
@@ -67,28 +77,64 @@ export default function KidsDashboard() {
                                     styles.menuItem,
                                     { backgroundColor: item.bg, borderBottomColor: item.borderColor }
                                 ]}
-                                activeOpacity={0.8}
+                                activeOpacity={0.9}
                             >
-                                <View style={styles.menuItemDecor1} />
-                                <View style={styles.menuItemDecor2} />
-                                <View style={styles.menuItemContent}>
-                                    <IconComponent size={48} color="white" />
+                                {/* Decorative circles */}
+                                <View style={styles.decor1} />
+                                <View style={styles.decor2} />
+
+                                {/* Icon */}
+                                <View style={styles.iconContainer}>
+                                    <IconComponent size={56} color="white" />
                                 </View>
-                                <View style={styles.menuItemLabel}>
-                                    <Text style={styles.menuItemTitle}>{item.label}</Text>
-                                    <Text style={styles.menuItemSub}>{item.sub}</Text>
+
+                                {/* Labels */}
+                                <View style={styles.labelContainer}>
+                                    <Text style={styles.menuLabel}>{item.label}</Text>
+                                    <Text style={styles.menuSub}>{item.sub}</Text>
                                 </View>
                             </TouchableOpacity>
                         );
                     })}
                 </View>
             </ScrollView>
-        </Layout>
+        </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: '#fef3c7',
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 12,
+        backgroundColor: '#facc15',
+    },
+    backButton: {
+        width: 44,
+        height: 44,
+        backgroundColor: 'white',
+        borderRadius: 22,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    headerTitle: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#1e40af',
+    },
     content: {
+        padding: 16,
         paddingBottom: 32,
     },
     greetingCard: {
@@ -101,12 +147,17 @@ const styles = StyleSheet.create({
         marginBottom: 24,
         borderWidth: 2,
         borderColor: 'rgba(255,255,255,0.5)',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 1,
     },
     avatar: {
         fontSize: 48,
     },
     greetingTitle: {
-        fontSize: 26,
+        fontSize: 28,
         fontWeight: 'bold',
         color: '#1f2937',
     },
@@ -125,17 +176,17 @@ const styles = StyleSheet.create({
         aspectRatio: 1,
         borderRadius: 24,
         overflow: 'hidden',
-        borderBottomWidth: 6,
+        borderBottomWidth: 8,
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.2,
-        shadowRadius: 8,
-        elevation: 6,
+        shadowOffset: { width: 0, height: 6 },
+        shadowOpacity: 0.25,
+        shadowRadius: 12,
+        elevation: 8,
         justifyContent: 'center',
         alignItems: 'center',
         position: 'relative',
     },
-    menuItemDecor1: {
+    decor1: {
         position: 'absolute',
         top: -40,
         left: -40,
@@ -144,7 +195,7 @@ const styles = StyleSheet.create({
         borderRadius: 48,
         backgroundColor: 'rgba(255,255,255,0.1)',
     },
-    menuItemDecor2: {
+    decor2: {
         position: 'absolute',
         bottom: -40,
         right: -40,
@@ -153,22 +204,21 @@ const styles = StyleSheet.create({
         borderRadius: 48,
         backgroundColor: 'rgba(255,255,255,0.1)',
     },
-    menuItemContent: {
-        padding: 8,
+    iconContainer: {
+        marginBottom: 8,
     },
-    menuItemLabel: {
+    labelContainer: {
         alignItems: 'center',
-        marginTop: 8,
     },
-    menuItemTitle: {
-        fontSize: 22,
+    menuLabel: {
+        fontSize: 24,
         fontWeight: 'bold',
         color: 'white',
         textShadowColor: 'rgba(0,0,0,0.1)',
         textShadowOffset: { width: 0, height: 2 },
         textShadowRadius: 4,
     },
-    menuItemSub: {
+    menuSub: {
         fontSize: 11,
         fontWeight: 'bold',
         color: 'rgba(255,255,255,0.9)',
