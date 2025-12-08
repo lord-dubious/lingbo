@@ -1,8 +1,9 @@
 import { GoogleGenAI } from '@google/genai';
-import Constants from 'expo-constants';
 
-// Get API key from Expo constants or environment
-const API_KEY = Constants.expoConfig?.extra?.geminiApiKey || process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+// In Expo, process.env is replaced at build time for EXPO_PUBLIC_* variables
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
+
+console.log('Gemini API Key configured:', API_KEY ? 'Yes' : 'No');
 
 const getClient = () => {
     if (!API_KEY) {

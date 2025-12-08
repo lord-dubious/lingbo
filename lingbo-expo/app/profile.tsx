@@ -1,18 +1,46 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import { LogOut, Trophy, Flame, Star, BookOpen, Target } from 'lucide-react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView,
+    Modal,
+    TextInput
+} from 'react-native';
+import { LogOut, Trophy, Flame, Star, BookOpen, Target, Edit2, X } from 'lucide-react-native';
 import Layout from '@/components/Layout';
 import { useUser } from '@/context/UserContext';
-import { ACHIEVEMENTS } from '@/constants';
+import { ACHIEVEMENTS, AVATAR_OPTIONS } from '@/constants';
+
+// Avatar options for kids to pick from
+const avatars = ['🐻', '🦊', '🐰', '🐸', '🐼', '🦁', '🐶', '🐱', '🦄', '🐲', '🎭', '👑'];
 
 export default function ProfilePage() {
     const router = useRouter();
-    const { activeProfile, logout } = useUser();
+    const { activeProfile, logout, updateProfile } = useUser();
+    const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+    const [editingName, setEditingName] = useState(false);
+    const [newName, setNewName] = useState(activeProfile?.name || '');
 
     const handleLogout = () => {
         logout();
         router.replace('/onboarding');
+    };
+
+    const handleAvatarSelect = (avatar: string) => {
+        if (activeProfile && updateProfile) {
+            updateProfile(activeProfile.id, { avatar });
+        }
+        setShowAvatarPicker(false);
+    };
+
+    const handleNameSave = () => {
+        if (activeProfile && updateProfile && newName.trim()) {
+            updateProfile(activeProfile.id, { name: newName.trim() });
+        }
+        setEditingName(false);
     };
 
     const unlockedAchievements = activeProfile?.progress?.achievements || [];
@@ -25,10 +53,35 @@ export default function ProfilePage() {
             >
                 {/* Avatar & Info */}
                 <View style={styles.header}>
-                    <View style={styles.avatarContainer}>
+                    <TouchableOpacity
+                        onPress={() => setShowAvatarPicker(true)}
+                        style={styles.avatarContainer}
+                    >
                         <Text style={styles.avatar}>{activeProfile?.avatar || '👤'}</Text>
-                    </View>
-                    <Text style={styles.name}>{activeProfile?.name}</Text>
+                        <View style={styles.editBadge}>
+                            <Edit2 size={12} color="white" />
+                        </View>
+                    </TouchableOpacity>
+
+                    {editingName ? (
+                        <View style={styles.nameEditRow}>
+                            <TextInput
+                                value={newName}
+                                onChangeText={setNewName}
+                                style={styles.nameInput}
+                                autoFocus
+                                onSubmitEditing={handleNameSave}
+                            />
+                            <TouchableOpacity onPress={handleNameSave} style={styles.saveButton}>
+                                <Text style={styles.saveButtonText}>Save</Text>
+                            </TouchableOpacity>
+                        </View>
+                    ) : (
+                        <TouchableOpacity onPress={() => setEditingName(true)}>
+                            <Text style={styles.name}>{activeProfile?.name}</Text>
+                        </TouchableOpacity>
+                    )}
+
                     <Text style={styles.joined}>
                         Member since {activeProfile?.joinedDate || new Date().toLocaleDateString()}
                     </Text>
@@ -96,6 +149,39 @@ export default function ProfilePage() {
                     <Text style={styles.logoutText}>Log Out</Text>
                 </TouchableOpacity>
             </ScrollView>
+
+            {/* Avatar Picker Modal */}
+            <Modal
+                visible={showAvatarPicker}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowAvatarPicker(false)}
+            >
+                <View style={styles.modalOverlay}>
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Choose Your Avatar</Text>
+                            <TouchableOpacity onPress={() => setShowAvatarPicker(false)}>
+                                <X size={24} color="#6b7280" />
+                            </TouchableOpacity>
+                        </View>
+                        <View style={styles.avatarGrid}>
+                            {avatars.map((emoji) => (
+                                <TouchableOpacity
+                                    key={emoji}
+                                    onPress={() => handleAvatarSelect(emoji)}
+                                    style={[
+                                        styles.avatarOption,
+                                        activeProfile?.avatar === emoji && styles.avatarOptionSelected
+                                    ]}
+                                >
+                                    <Text style={styles.avatarEmoji}>{emoji}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                </View>
+            </Modal>
         </Layout>
     );
 }
@@ -118,15 +204,56 @@ const styles = StyleSheet.create({
         marginBottom: 12,
         borderWidth: 4,
         borderColor: '#fed7aa',
+        position: 'relative',
     },
     avatar: {
         fontSize: 56,
+    },
+    editBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        backgroundColor: '#f97316',
+        width: 28,
+        height: 28,
+        borderRadius: 14,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: 'white',
     },
     name: {
         fontSize: 28,
         fontWeight: 'bold',
         color: '#1f2937',
         marginBottom: 4,
+    },
+    nameEditRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginBottom: 4,
+    },
+    nameInput: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        color: '#1f2937',
+        backgroundColor: '#f3f4f6',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 12,
+        minWidth: 150,
+        textAlign: 'center',
+    },
+    saveButton: {
+        backgroundColor: '#22c55e',
+        paddingHorizontal: 16,
+        paddingVertical: 8,
+        borderRadius: 12,
+    },
+    saveButtonText: {
+        color: 'white',
+        fontWeight: 'bold',
     },
     joined: {
         fontSize: 14,
@@ -216,5 +343,54 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold',
         color: '#ef4444',
+    },
+    // Modal styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 24,
+    },
+    modalContent: {
+        backgroundColor: 'white',
+        borderRadius: 24,
+        padding: 24,
+        width: '100%',
+        maxWidth: 360,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1f2937',
+    },
+    avatarGrid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+        justifyContent: 'center',
+    },
+    avatarOption: {
+        width: 64,
+        height: 64,
+        backgroundColor: '#f3f4f6',
+        borderRadius: 32,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderWidth: 3,
+        borderColor: 'transparent',
+    },
+    avatarOptionSelected: {
+        borderColor: '#f97316',
+        backgroundColor: '#fff7ed',
+    },
+    avatarEmoji: {
+        fontSize: 36,
     },
 });

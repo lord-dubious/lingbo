@@ -93,7 +93,7 @@ const Layout: React.FC<LayoutProps> = ({
                     >
                         {(!showBack || isKidsMode) && (
                             <Image
-                                source={require('../assets/images/lingbo_logo.png')}
+                                source={require('../assets/images/icon.png')}
                                 style={styles.logo}
                                 resizeMode="contain"
                             />
