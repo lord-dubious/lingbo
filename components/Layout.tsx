@@ -3,12 +3,12 @@ import { View, Text, TouchableOpacity, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, usePathname } from 'expo-router';
 import { ArrowLeft, Home, BookOpen, Gamepad2, User } from 'lucide-react-native';
-import { styled } from 'nativewind';
 
-const StyledSafeAreaView = styled(SafeAreaView);
-const StyledView = styled(View);
-const StyledText = styled(Text);
-const StyledTouchableOpacity = styled(TouchableOpacity);
+
+
+
+
+
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -46,39 +46,39 @@ const Layout = ({
   ];
 
   return (
-    <StyledSafeAreaView className={`flex-1 ${isKidsMode ? 'bg-sky-200' : 'bg-gray-50'}`}>
+    <SafeAreaView className={`flex-1 ${isKidsMode ? 'bg-sky-200' : 'bg-gray-50'}`}>
       {/* Header */}
       {(title || showBack) && (
-        <StyledView className={`px-4 py-3 flex-row items-center justify-between ${isKidsMode ? 'bg-sky-200' : 'bg-white border-b border-gray-100'}`}>
-          <StyledView className="flex-row items-center">
+        <View className={`px-4 py-3 flex-row items-center justify-between ${isKidsMode ? 'bg-sky-200' : 'bg-white border-b border-gray-100'}`}>
+          <View className="flex-row items-center">
              {showBack && (
-               <StyledTouchableOpacity onPress={handleBack} className="mr-3 p-2 rounded-full bg-white/50">
+               <TouchableOpacity onPress={handleBack} className="mr-3 p-2 rounded-full bg-white/50">
                  <ArrowLeft size={24} color={isKidsMode ? '#0ea5e9' : '#374151'} />
-               </StyledTouchableOpacity>
+               </TouchableOpacity>
              )}
              {title && (
-               <StyledText className={`font-bold text-xl ${isKidsMode ? 'text-sky-700 font-kids' : 'text-gray-800'}`}>
+               <Text className={`font-bold text-xl ${isKidsMode ? 'text-sky-700 font-kids' : 'text-gray-800'}`}>
                  {title}
-               </StyledText>
+               </Text>
              )}
-          </StyledView>
-        </StyledView>
+          </View>
+        </View>
       )}
 
       {/* Content */}
-      <StyledView className="flex-1">
+      <View className="flex-1">
          <ScrollView contentContainerStyle={{ paddingBottom: 100, paddingHorizontal: 16, paddingTop: 16 }}>
             {children}
          </ScrollView>
-      </StyledView>
+      </View>
 
       {/* Bottom Navigation */}
       {!hideBottomNav && (
-        <StyledView className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex-row justify-around py-3 pb-6">
+        <View className="absolute bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex-row justify-around py-3 pb-6">
            {navItems.map((item) => {
              const isActive = pathname.startsWith(item.path) && (item.path !== '/hub' || pathname === '/hub');
              return (
-               <StyledTouchableOpacity
+               <TouchableOpacity
                   key={item.path}
                   onPress={() => router.push(item.path)}
                   className="items-center"
@@ -88,15 +88,15 @@ const Layout = ({
                     color={isActive ? '#FF6B00' : '#9CA3AF'}
                     strokeWidth={isActive ? 2.5 : 2}
                   />
-                  <StyledText className={`text-xs mt-1 ${isActive ? 'text-primary font-bold' : 'text-gray-400'}`}>
+                  <Text className={`text-xs mt-1 ${isActive ? 'text-primary font-bold' : 'text-gray-400'}`}>
                     {item.label}
-                  </StyledText>
-               </StyledTouchableOpacity>
+                  </Text>
+               </TouchableOpacity>
              );
            })}
-        </StyledView>
+        </View>
       )}
-    </StyledSafeAreaView>
+    </SafeAreaView>
   );
 };
 

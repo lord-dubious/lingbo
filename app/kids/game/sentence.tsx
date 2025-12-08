@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert } from 'react-native';
 import { RefreshCw, CheckCircle, Volume2 } from 'lucide-react-native';
-import { styled } from 'nativewind';
+
 import Layout from '../../../components/Layout';
 import { playGameSound, playPCMAudio } from '../../../utils/audioUtils';
 import { generateIgboSpeech } from '../../../services/geminiService';
 
-const StyledView = styled(View);
-const StyledText = styled(Text);
-const StyledTouchableOpacity = styled(TouchableOpacity);
+
+
+
 
 const SENTENCES = [
     {
@@ -88,39 +88,39 @@ export default function SentencePuzzle() {
 
     return (
         <Layout title="Sentence Puzzle" showBack backPath="/kids/games" isKidsMode hideBottomNav>
-            <StyledView className="flex-1 items-center justify-center p-4">
-                 <StyledView className="bg-white/50 p-6 rounded-3xl mb-8 w-full items-center">
-                     <StyledText className="text-gray-600 font-bold mb-2">Make this sentence:</StyledText>
-                     <StyledText className="text-xl text-gray-800 font-bold text-center italic">"{currentSentence.english}"</StyledText>
-                 </StyledView>
+            <View className="flex-1 items-center justify-center p-4">
+                 <View className="bg-white/50 p-6 rounded-3xl mb-8 w-full items-center">
+                     <Text className="text-gray-600 font-bold mb-2">Make this sentence:</Text>
+                     <Text className="text-xl text-gray-800 font-bold text-center italic">"{currentSentence.english}"</Text>
+                 </View>
 
                  {/* Drop Zone */}
-                 <StyledView className="flex-row flex-wrap gap-2 min-h-[80px] w-full bg-white/40 border-2 border-dashed border-white/60 rounded-2xl p-4 mb-8 justify-center items-center">
+                 <View className="flex-row flex-wrap gap-2 min-h-[80px] w-full bg-white/40 border-2 border-dashed border-white/60 rounded-2xl p-4 mb-8 justify-center items-center">
                      {selectedParts.map((word, i) => (
-                         <StyledTouchableOpacity key={i} onPress={() => handleDeselect(word)} className="bg-orange-400 px-6 py-3 rounded-xl shadow-sm">
-                             <StyledText className="text-white font-bold text-xl">{word}</StyledText>
-                         </StyledTouchableOpacity>
+                         <TouchableOpacity key={i} onPress={() => handleDeselect(word)} className="bg-orange-400 px-6 py-3 rounded-xl shadow-sm">
+                             <Text className="text-white font-bold text-xl">{word}</Text>
+                         </TouchableOpacity>
                      ))}
-                     {selectedParts.length === 0 && <StyledText className="text-gray-400 font-bold">Tap words below to build</StyledText>}
-                 </StyledView>
+                     {selectedParts.length === 0 && <Text className="text-gray-400 font-bold">Tap words below to build</Text>}
+                 </View>
 
                  {/* Word Bank */}
-                 <StyledView className="flex-row flex-wrap gap-3 justify-center">
+                 <View className="flex-row flex-wrap gap-3 justify-center">
                      {shuffledParts.map((word, i) => (
-                         <StyledTouchableOpacity
+                         <TouchableOpacity
                             key={i}
                             onPress={() => handleSelect(word)}
                             className="bg-white px-6 py-4 rounded-xl shadow-md border-b-4 border-gray-200 active:border-b-0 active:translate-y-1"
                          >
-                             <StyledText className="text-gray-800 font-bold text-xl">{word}</StyledText>
-                         </StyledTouchableOpacity>
+                             <Text className="text-gray-800 font-bold text-xl">{word}</Text>
+                         </TouchableOpacity>
                      ))}
-                 </StyledView>
+                 </View>
 
-                 <StyledTouchableOpacity onPress={resetGame} className="mt-12 p-4 bg-gray-200 rounded-full">
+                 <TouchableOpacity onPress={resetGame} className="mt-12 p-4 bg-gray-200 rounded-full">
                      <RefreshCw size={24} color="#4b5563" />
-                 </StyledTouchableOpacity>
-            </StyledView>
+                 </TouchableOpacity>
+            </View>
         </Layout>
     );
 }

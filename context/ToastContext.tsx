@@ -1,9 +1,9 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import { View, Text, Animated, Dimensions } from 'react-native';
-import { styled } from 'nativewind';
 
-const StyledView = styled(View);
-const StyledText = styled(Text);
+
+
+
 
 interface ToastContextType {
   showToast: (message: string, type?: 'success' | 'error' | 'info') => void;
@@ -48,9 +48,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
             style={{ opacity: fadeAnim, position: 'absolute', top: 60, left: 20, right: 20, zIndex: 100 }}
             pointerEvents="none"
         >
-            <StyledView className={`${getBackgroundColor(toast.type)} p-4 rounded-xl shadow-lg items-center`}>
-                <StyledText className="text-white font-bold text-center">{toast.message}</StyledText>
-            </StyledView>
+            <View className={`${getBackgroundColor(toast.type)} p-4 rounded-xl shadow-lg items-center`}>
+                <Text className="text-white font-bold text-center">{toast.message}</Text>
+            </View>
         </Animated.View>
       )}
     </ToastContext.Provider>

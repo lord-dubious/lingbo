@@ -1,13 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, Dimensions } from 'react-native';
 import { Play, Timer } from 'lucide-react-native';
-import { styled } from 'nativewind';
+
 import Layout from '../../../components/Layout';
 import { playGameSound } from '../../../utils/audioUtils';
 
-const StyledView = styled(View);
-const StyledText = styled(Text);
-const StyledTouchableOpacity = styled(TouchableOpacity);
+
+
+
 
 const MOLES = 9;
 const GAME_DURATION = 30;
@@ -83,42 +83,42 @@ export default function SpeedTap() {
 
     return (
         <Layout title="Speed Tap" showBack backPath="/kids/games" isKidsMode hideBottomNav>
-            <StyledView className="flex-1 items-center justify-center p-4">
+            <View className="flex-1 items-center justify-center p-4">
                 {!isPlaying ? (
-                    <StyledView className="items-center bg-white/80 p-8 rounded-3xl shadow-sm">
-                        <StyledText className="text-4xl font-kids font-bold text-indigo-600 mb-2">Speed Tap!</StyledText>
-                        <StyledText className="text-gray-500 mb-6 font-medium">Tap the orange dots as fast as you can!</StyledText>
-                        {timeLeft === 0 && <StyledText className="text-2xl font-bold text-green-600 mb-4">Score: {score}</StyledText>}
-                        <StyledTouchableOpacity onPress={startGame} className="bg-indigo-500 py-4 px-12 rounded-full shadow-lg active:scale-95 transition-transform">
+                    <View className="items-center bg-white/80 p-8 rounded-3xl shadow-sm">
+                        <Text className="text-4xl font-kids font-bold text-indigo-600 mb-2">Speed Tap!</Text>
+                        <Text className="text-gray-500 mb-6 font-medium">Tap the orange dots as fast as you can!</Text>
+                        {timeLeft === 0 && <Text className="text-2xl font-bold text-green-600 mb-4">Score: {score}</Text>}
+                        <TouchableOpacity onPress={startGame} className="bg-indigo-500 py-4 px-12 rounded-full shadow-lg active:scale-95 transition-transform">
                             <Play size={32} color="white" fill="white" />
-                        </StyledTouchableOpacity>
-                    </StyledView>
+                        </TouchableOpacity>
+                    </View>
                 ) : (
                     <>
-                        <StyledView className="flex-row justify-between w-full max-w-sm mb-8 bg-white/50 p-4 rounded-2xl">
-                             <StyledView className="flex-row items-center gap-2">
-                                 <StyledText className="font-bold text-2xl text-indigo-700">Score: {score}</StyledText>
-                             </StyledView>
-                             <StyledView className="flex-row items-center gap-2">
+                        <View className="flex-row justify-between w-full max-w-sm mb-8 bg-white/50 p-4 rounded-2xl">
+                             <View className="flex-row items-center gap-2">
+                                 <Text className="font-bold text-2xl text-indigo-700">Score: {score}</Text>
+                             </View>
+                             <View className="flex-row items-center gap-2">
                                  <Timer size={24} color="#4338ca"/>
-                                 <StyledText className="font-bold text-2xl text-indigo-700">{timeLeft}s</StyledText>
-                             </StyledView>
-                        </StyledView>
+                                 <Text className="font-bold text-2xl text-indigo-700">{timeLeft}s</Text>
+                             </View>
+                        </View>
 
-                        <StyledView className="flex-row flex-wrap w-full max-w-sm gap-4 justify-center">
+                        <View className="flex-row flex-wrap w-full max-w-sm gap-4 justify-center">
                             {Array.from({ length: MOLES }).map((_, i) => (
-                                <StyledTouchableOpacity
+                                <TouchableOpacity
                                     key={i}
                                     onPress={() => handleTap(i)}
                                     className={`w-24 h-24 rounded-full border-4 shadow-inner ${activeMole === i ? 'bg-orange-500 border-orange-600' : 'bg-indigo-200 border-indigo-300'}`}
                                 >
-                                    {activeMole === i && <StyledView className="w-full h-full items-center justify-center"><StyledText className="text-4xl">🐹</StyledText></StyledView>}
-                                </StyledTouchableOpacity>
+                                    {activeMole === i && <View className="w-full h-full items-center justify-center"><Text className="text-4xl">🐹</Text></View>}
+                                </TouchableOpacity>
                             ))}
-                        </StyledView>
+                        </View>
                     </>
                 )}
-            </StyledView>
+            </View>
         </Layout>
     );
 }

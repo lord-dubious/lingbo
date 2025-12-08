@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, Modal, ScrollView } from 'react-native';
 import { Keyboard as KeyboardIcon, X } from 'lucide-react-native';
-import { styled } from 'nativewind';
+
 import { useUser } from '../context/UserContext';
 import * as Clipboard from 'expo-clipboard';
 
-const StyledView = styled(View);
-const StyledText = styled(Text);
-const StyledTouchableOpacity = styled(TouchableOpacity);
+
+
+
 
 const IgboKeyboard = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -35,12 +35,12 @@ const IgboKeyboard = () => {
   return (
     <>
       {!isOpen && (
-        <StyledTouchableOpacity
+        <TouchableOpacity
           onPress={() => setIsOpen(true)}
           className="absolute bottom-24 right-4 bg-primary p-3 rounded-full shadow-lg z-50"
         >
            <KeyboardIcon color="white" size={24} />
-        </StyledTouchableOpacity>
+        </TouchableOpacity>
       )}
 
       <Modal
@@ -49,28 +49,28 @@ const IgboKeyboard = () => {
         animationType="slide"
         onRequestClose={() => setIsOpen(false)}
       >
-        <StyledView className="flex-1 justify-end">
-            <StyledView className="bg-white border-t border-gray-200 shadow-xl pb-8">
-                <StyledView className="flex-row items-center justify-between p-3 border-b border-gray-100 bg-gray-50">
-                    <StyledText className="font-bold text-gray-700">Igbo Characters (Tap to Copy)</StyledText>
-                    <StyledTouchableOpacity onPress={() => setIsOpen(false)} className="p-1 bg-gray-200 rounded-full">
+        <View className="flex-1 justify-end">
+            <View className="bg-white border-t border-gray-200 shadow-xl pb-8">
+                <View className="flex-row items-center justify-between p-3 border-b border-gray-100 bg-gray-50">
+                    <Text className="font-bold text-gray-700">Igbo Characters (Tap to Copy)</Text>
+                    <TouchableOpacity onPress={() => setIsOpen(false)} className="p-1 bg-gray-200 rounded-full">
                         <X size={20} color="#4b5563" />
-                    </StyledTouchableOpacity>
-                </StyledView>
+                    </TouchableOpacity>
+                </View>
 
-                <StyledView className="p-4 flex-row flex-wrap justify-center gap-3">
+                <View className="p-4 flex-row flex-wrap justify-center gap-3">
                     {specializedChars.map((char) => (
-                        <StyledTouchableOpacity
+                        <TouchableOpacity
                             key={char}
                             onPress={() => handleCharClick(char)}
                             className="w-12 h-12 bg-white border border-gray-200 rounded-xl items-center justify-center shadow-sm active:bg-orange-50 active:border-primary"
                         >
-                            <StyledText className="text-lg font-bold text-gray-800">{char}</StyledText>
-                        </StyledTouchableOpacity>
+                            <Text className="text-lg font-bold text-gray-800">{char}</Text>
+                        </TouchableOpacity>
                     ))}
-                </StyledView>
-            </StyledView>
-        </StyledView>
+                </View>
+            </View>
+        </View>
       </Modal>
     </>
   );

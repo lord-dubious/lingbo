@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Image } from 'react-native';
 import { RefreshCw } from 'lucide-react-native';
-import { styled } from 'nativewind';
+
 import Layout from '../../../components/Layout';
 import { playGameSound } from '../../../utils/audioUtils';
 
-const StyledView = styled(View);
-const StyledText = styled(Text);
-const StyledTouchableOpacity = styled(TouchableOpacity);
-const StyledImage = styled(Image);
+
+
+
+
 
 const CARDS = [
     { id: 1, content: '🦁', type: 'image' },
@@ -70,35 +70,35 @@ export default function MemoryMatch() {
 
     return (
         <Layout title="Memory Match" showBack backPath="/kids/games" isKidsMode hideBottomNav>
-            <StyledView className="flex-1 p-4 items-center justify-center">
-                <StyledView className="flex-row flex-wrap justify-center gap-4">
+            <View className="flex-1 p-4 items-center justify-center">
+                <View className="flex-row flex-wrap justify-center gap-4">
                     {gameCards.map((card, index) => {
                         const isFlipped = flipped.includes(index) || matched.includes(card.id);
                         return (
-                            <StyledTouchableOpacity
+                            <TouchableOpacity
                                 key={card.uniqueId}
                                 onPress={() => handleFlip(index)}
                                 className={`w-20 h-24 rounded-xl items-center justify-center shadow-sm border-b-4 transition-all ${isFlipped ? 'bg-white border-cyan-200' : 'bg-cyan-400 border-cyan-600'}`}
                             >
                                 {isFlipped ? (
-                                    <StyledText className="text-2xl font-bold">{card.content}</StyledText>
+                                    <Text className="text-2xl font-bold">{card.content}</Text>
                                 ) : (
-                                    <StyledText className="text-3xl text-white/50">?</StyledText>
+                                    <Text className="text-3xl text-white/50">?</Text>
                                 )}
-                            </StyledTouchableOpacity>
+                            </TouchableOpacity>
                         );
                     })}
-                </StyledView>
+                </View>
 
                 {matched.length === CARDS.length / 2 && (
-                    <StyledView className="mt-8 items-center bg-white/80 p-6 rounded-3xl">
-                        <StyledText className="text-2xl font-bold text-green-600 mb-2">You Won! 🎉</StyledText>
-                        <StyledTouchableOpacity onPress={resetGame} className="bg-cyan-500 py-3 px-6 rounded-full">
-                            <StyledText className="text-white font-bold">Play Again</StyledText>
-                        </StyledTouchableOpacity>
-                    </StyledView>
+                    <View className="mt-8 items-center bg-white/80 p-6 rounded-3xl">
+                        <Text className="text-2xl font-bold text-green-600 mb-2">You Won! 🎉</Text>
+                        <TouchableOpacity onPress={resetGame} className="bg-cyan-500 py-3 px-6 rounded-full">
+                            <Text className="text-white font-bold">Play Again</Text>
+                        </TouchableOpacity>
+                    </View>
                 )}
-            </StyledView>
+            </View>
         </Layout>
     );
 }

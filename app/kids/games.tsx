@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Puzzle, Sparkles, Timer, Image as ImageIcon, Play } from 'lucide-react-native';
-import { styled } from 'nativewind';
+
 import Layout from '../../components/Layout';
 
-const StyledView = styled(View);
-const StyledText = styled(Text);
-const StyledTouchableOpacity = styled(TouchableOpacity);
+
+
+
 
 export default function KidsGameMenu() {
   const router = useRouter();
@@ -20,9 +20,9 @@ export default function KidsGameMenu() {
 
   return (
       <Layout title="Games" showBack backPath="/kids" isKidsMode hideBottomNav>
-          <StyledView className="space-y-4 p-2">
+          <View className="space-y-4 p-2">
               {games.map((g, i) => (
-                  <StyledTouchableOpacity
+                  <TouchableOpacity
                       key={i}
                       onPress={() => router.push(g.path)}
                       className={`
@@ -31,19 +31,19 @@ export default function KidsGameMenu() {
                           flex-row items-center gap-6 shadow-lg mb-4
                       `}
                   >
-                      <StyledView className="bg-white/25 p-4 rounded-2xl">
+                      <View className="bg-white/25 p-4 rounded-2xl">
                           <g.icon size={32} color="white" />
-                      </StyledView>
-                      <StyledView className="flex-1">
-                          <StyledText className="font-bold text-2xl text-white">{g.title}</StyledText>
-                          <StyledText className="text-white/80 font-bold text-sm">Tap to play!</StyledText>
-                      </StyledView>
-                      <StyledView className="bg-white/20 p-3 rounded-full">
+                      </View>
+                      <View className="flex-1">
+                          <Text className="font-bold text-2xl text-white">{g.title}</Text>
+                          <Text className="text-white/80 font-bold text-sm">Tap to play!</Text>
+                      </View>
+                      <View className="bg-white/20 p-3 rounded-full">
                           <Play size={24} color="white" fill="white" />
-                      </StyledView>
-                  </StyledTouchableOpacity>
+                      </View>
+                  </TouchableOpacity>
               ))}
-          </StyledView>
+          </View>
       </Layout>
   );
 }

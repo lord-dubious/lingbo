@@ -13,13 +13,13 @@ import {
   Timer,
   Play
 } from 'lucide-react-native';
-import { styled } from 'nativewind';
+
 import Layout from '../../components/Layout';
 import { useUser } from '../../context/UserContext';
 
-const StyledView = styled(View);
-const StyledText = styled(Text);
-const StyledTouchableOpacity = styled(TouchableOpacity);
+
+
+
 
 export default function KidsDashboard() {
   const router = useRouter();
@@ -36,20 +36,20 @@ export default function KidsDashboard() {
 
   return (
     <Layout title="Kids Corner" showBack backPath="/hub" isKidsMode hideBottomNav>
-       <StyledView className="items-center pb-8">
+       <View className="items-center pb-8">
           {/* Big Greeting */}
-          <StyledView className="w-full bg-white/60 p-4 rounded-3xl mb-6 flex-row items-center gap-4 border-2 border-white/50 shadow-sm">
-             <StyledText className="text-5xl">{activeProfile?.avatar || '🐻'}</StyledText>
-             <StyledView>
-                <StyledText className="font-bold text-3xl text-gray-800 tracking-wide">Hi, {activeProfile?.name}!</StyledText>
-                <StyledText className="font-bold text-gray-500 text-sm">What do you want to do?</StyledText>
-             </StyledView>
-          </StyledView>
+          <View className="w-full bg-white/60 p-4 rounded-3xl mb-6 flex-row items-center gap-4 border-2 border-white/50 shadow-sm">
+             <Text className="text-5xl">{activeProfile?.avatar || '🐻'}</Text>
+             <View>
+                <Text className="font-bold text-3xl text-gray-800 tracking-wide">Hi, {activeProfile?.name}!</Text>
+                <Text className="font-bold text-gray-500 text-sm">What do you want to do?</Text>
+             </View>
+          </View>
 
           {/* Grid */}
-          <StyledView className="flex-row flex-wrap justify-between">
+          <View className="flex-row flex-wrap justify-between">
              {menu.map((item, i) => (
-                <StyledTouchableOpacity
+                <TouchableOpacity
                   key={i}
                   onPress={() => router.push(item.path)}
                   className={`
@@ -60,17 +60,17 @@ export default function KidsDashboard() {
                 >
                    {/* Background pattern equivalent could be images, skipping for simplicity */}
 
-                   <StyledView className="items-center justify-center p-2">
+                   <View className="items-center justify-center p-2">
                      <item.icon size={56} color="white" />
-                   </StyledView>
-                   <StyledView className="items-center">
-                       <StyledText className="font-bold text-2xl text-white tracking-wide">{item.label}</StyledText>
-                       <StyledText className="text-xs font-bold text-white/90 uppercase tracking-wider mt-1">{item.sub}</StyledText>
-                   </StyledView>
-                </StyledTouchableOpacity>
+                   </View>
+                   <View className="items-center">
+                       <Text className="font-bold text-2xl text-white tracking-wide">{item.label}</Text>
+                       <Text className="text-xs font-bold text-white/90 uppercase tracking-wider mt-1">{item.sub}</Text>
+                   </View>
+                </TouchableOpacity>
              ))}
-          </StyledView>
-       </StyledView>
+          </View>
+       </View>
     </Layout>
   );
 }
