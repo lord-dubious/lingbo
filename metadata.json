@@ -1,0 +1,7 @@
+{
+  "name": "Copy of Lingbo",
+  "description": "A comprehensive Igbo language learning application featuring adult curriculums, a kids' corner with interactive games, and AI-powered speaking practice.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
