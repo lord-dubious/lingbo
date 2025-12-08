@@ -77,7 +77,7 @@ export const ADULT_CURRICULUM: CurriculumLevel[] = [
   { 
     level_id: 3, 
     title: "Food (Nri)", 
-    status: 'in_progress', 
+    status: 'locked', 
     description: "Common foods and eating.",
     lessons: [
        {
@@ -138,10 +138,10 @@ export const KIDS_GAMES: KidGame[] = [
 ];
 
 export const LIBRARY_BOOKS: BookResource[] = [
-  { title: "My First Igbo Book", type: "PDF", cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200" },
-  { title: "The Tortoise Tales", type: "PDF", cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=200" },
-  { title: "Animal Kingdom", type: "PDF", cover: "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=200" },
-  { title: "Igbo Proverbs", type: "PDF", cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=200" }
+  { id: 'b1', title: "My First Igbo Book", type: "Story", cover: "https://images.unsplash.com/photo-1544947950-fa07a98d237f?auto=format&fit=crop&q=80&w=200" },
+  { id: 'b2', title: "The Tortoise Tales", type: "Folktale", cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&q=80&w=200" },
+  { id: 'b3', title: "Animal Kingdom", type: "Vocabulary", cover: "https://images.unsplash.com/photo-1535905557558-afc4877a26fc?auto=format&fit=crop&q=80&w=200" },
+  { id: 'b4', title: "Igbo Proverbs", type: "Culture", cover: "https://images.unsplash.com/photo-1512820790803-83ca734da794?auto=format&fit=crop&q=80&w=200" }
 ];
 
 export const VIDEO_RESOURCES: VideoResource[] = [

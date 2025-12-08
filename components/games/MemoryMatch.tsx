@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { RefreshCcw, Sparkles, CheckCircle2, Star } from 'lucide-react';
 import { MEMORY_GAME_DATA } from '../../constants';
@@ -73,7 +72,7 @@ const MemoryMatch = () => {
   };
 
   return (
-     <Layout title="Memory Match" showBack backPath="/kids/games" isKidsMode hideBottomNav>
+     <Layout title="Memory Match" showBack isKidsMode hideBottomNav>
         {solved && <ConfettiOverlay onRestart={() => window.location.reload()} title="You Won!" subtitle={`Found all pairs in ${moves} moves`} />}
         
         {/* Match Visual Cue Overlay */}

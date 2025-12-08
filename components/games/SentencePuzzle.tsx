@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { RefreshCcw, Check } from 'lucide-react';
 import { KIDS_GAMES } from '../../constants';
@@ -63,7 +62,7 @@ export const SentencePuzzle = () => {
     };
 
     return (
-        <Layout title="Sentence Puzzle" showBack backPath="/kids/games" isKidsMode hideBottomNav>
+        <Layout title="Sentence Puzzle" showBack isKidsMode hideBottomNav>
              <div className="flex flex-col h-[calc(100vh-140px)]">
                {gameWon && <ConfettiOverlay onRestart={reset} title="You did it!" subtitle={sentenceGame.example_round.target_sentence} />}
                

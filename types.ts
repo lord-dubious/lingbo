@@ -44,9 +44,11 @@ export interface KidGame {
 }
 
 export interface BookResource {
+  id: string;
   title: string;
   type: string;
   cover?: string;
+  content?: string; // For the simple reader
 }
 
 export interface VideoResource {
@@ -54,7 +56,7 @@ export interface VideoResource {
   title: string;
   duration: string;
   thumbnail: string;
-  url: string; // Mock URL or embed ID
+  url: string; 
   category: string;
 }
 
@@ -83,6 +85,10 @@ export interface UserProfile {
   streak: number;
   level: number;
   xp: number;
+  progress?: {
+    completedLessons: number[];
+    gameScores: Record<string, number>;
+  };
 }
 
 export interface Achievement {

@@ -1,12 +1,13 @@
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, User, Bell, Home, BookOpen, Mic, Settings, Library } from 'lucide-react';
+import { ArrowLeft, User, Bell, Home, BookOpen, Mic, Library } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
   title?: string;
   showBack?: boolean;
-  backPath?: string; // New prop for explicit back navigation
+  backPath?: string; // Explicit back path
+  onBack?: () => void; // Custom back handler
   isKidsMode?: boolean;
   hideBottomNav?: boolean;
 }
@@ -16,6 +17,7 @@ const Layout: React.FC<LayoutProps> = ({
   title, 
   showBack = false, 
   backPath,
+  onBack,
   isKidsMode = false, 
   hideBottomNav = false 
 }) => {
@@ -24,7 +26,9 @@ const Layout: React.FC<LayoutProps> = ({
 
   const handleBack = () => {
     if (showBack) {
-      if (backPath) {
+      if (onBack) {
+        onBack();
+      } else if (backPath) {
         navigate(backPath);
       } else {
         navigate(-1);
@@ -65,15 +69,11 @@ const Layout: React.FC<LayoutProps> = ({
                 alt="Lingbo Logo" 
                 className="w-8 h-8 object-contain group-hover:scale-105 transition-transform"
                 onError={(e) => {
-                  // Fallback if image fails
                   e.currentTarget.style.display = 'none';
                   e.currentTarget.parentElement?.classList.add('fallback-logo');
                 }}
               />
             )}
-            {/* Fallback hidden text logic handled via CSS or conditional rendering if needed, 
-                but keeping structure simple for now. 
-            */}
             <h1 className={`font-bold text-lg ${isKidsMode ? 'font-kids text-blue-700 tracking-wide' : 'text-gray-800'}`}>
               {title || 'Lingbo'}
             </h1>
@@ -88,7 +88,7 @@ const Layout: React.FC<LayoutProps> = ({
         </div>
       </header>
 
-      {/* Main Content - Responsive Width with Padding for Bottom Nav */}
+      {/* Main Content */}
       <main className={`w-full max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto p-4 md:p-6 animate-in fade-in duration-300 ${(!isKidsMode && !hideBottomNav) ? 'pb-28' : 'pb-6'}`}>
         {children}
       </main>
@@ -96,22 +96,18 @@ const Layout: React.FC<LayoutProps> = ({
       {/* Bottom Navigation */}
       {!isKidsMode && !hideBottomNav && (
         <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 pt-2 pb-6 px-4 z-40 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
-          {/* Centered container for the nav items on larger screens */}
           <div className="max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto grid grid-cols-5 items-end">
             
-            {/* Home Tab */}
             <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'home' ? 'text-primary' : 'text-gray-400'} hover:text-primary`}>
               <Home size={24} strokeWidth={activeTab === 'home' ? 2.5 : 2} />
               <span className="text-[10px] font-medium">Home</span>
             </Link>
             
-            {/* Learn Tab */}
             <Link to="/adults" className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'learn' ? 'text-primary' : 'text-gray-400'} hover:text-primary`}>
               <BookOpen size={24} strokeWidth={activeTab === 'learn' ? 2.5 : 2} />
               <span className="text-[10px] font-medium">Learn</span>
             </Link>
 
-            {/* Tutor Tab (Floating Effect - Centered) */}
             <Link to="/practice" className="relative flex flex-col items-center group">
                <div className={`absolute -top-10 p-3.5 rounded-full shadow-lg border-4 border-gray-50 transition-all active:scale-95 group-hover:scale-105 group-hover:-translate-y-1
                  ${activeTab === 'practice' 
@@ -120,19 +116,17 @@ const Layout: React.FC<LayoutProps> = ({
                  }`}>
                  <Mic size={28} strokeWidth={activeTab === 'practice' ? 2.5 : 2} />
                </div>
-               <div className="h-6"></div> {/* Spacer for the icon height */}
+               <div className="h-6"></div> 
                <span className={`text-[10px] font-medium mt-1 transition-colors ${activeTab === 'practice' ? 'text-primary' : 'text-gray-400'}`}>
                  Tutor
                </span>
             </Link>
 
-             {/* Library Tab */}
              <Link to="/library" className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'library' ? 'text-primary' : 'text-gray-400'} hover:text-primary`}>
               <Library size={24} strokeWidth={activeTab === 'library' ? 2.5 : 2} />
               <span className="text-[10px] font-medium">Library</span>
             </Link>
 
-            {/* Profile Tab */}
             <Link to="/profile" className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'profile' ? 'text-primary' : 'text-gray-400'} hover:text-primary`}>
               <User size={24} strokeWidth={activeTab === 'profile' ? 2.5 : 2} />
               <span className="text-[10px] font-medium">Profile</span>

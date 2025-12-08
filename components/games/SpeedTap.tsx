@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Timer, Trophy } from 'lucide-react';
 import { KIDS_FLASHCARDS } from '../../constants';
@@ -52,7 +51,7 @@ export const SpeedTap = () => {
     };
 
     return (
-       <Layout title="Speed Tap" showBack backPath="/kids/games" isKidsMode hideBottomNav>
+       <Layout title="Speed Tap" showBack isKidsMode hideBottomNav>
           {gameOver ? (
              <div className="flex flex-col items-center justify-center h-[60vh] text-center">
                 <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mb-6 animate-bounce">

@@ -8,6 +8,9 @@ interface UserContextType {
   addProfile: (name: string, type: ProfileType) => void;
   switchProfile: (profileId: string) => void;
   updateActiveProfile: (data: Partial<UserProfile>) => void;
+  completeLesson: (levelId: number) => void;
+  saveGameScore: (gameId: string, score: number) => void;
+  deleteProfile: (id: string) => void;
   logout: () => void;
 }
 
@@ -45,7 +48,11 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       streak: 1,
       level: 1,
       xp: 0,
-      avatar: type === 'kid' ? '🐻' : '👤'
+      avatar: type === 'kid' ? '🐻' : '👤',
+      progress: {
+        completedLessons: [],
+        gameScores: {}
+      }
     };
     setProfiles(prev => [...prev, newProfile]);
     setActiveProfileId(newProfile.id);
@@ -60,12 +67,58 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setProfiles(prev => prev.map(p => p.id === activeProfileId ? { ...p, ...data } : p));
   };
 
+  const completeLesson = (levelId: number) => {
+      if (!activeProfileId) return;
+      setProfiles(prev => prev.map(p => {
+          if (p.id !== activeProfileId) return p;
+          const completed = p.progress?.completedLessons || [];
+          if (completed.includes(levelId)) return p;
+          
+          return {
+              ...p,
+              xp: (p.xp || 0) + 100,
+              progress: {
+                  ...p.progress,
+                  completedLessons: [...completed, levelId]
+              }
+          };
+      }));
+  };
+
+  const saveGameScore = (gameId: string, score: number) => {
+      if (!activeProfileId) return;
+      setProfiles(prev => prev.map(p => {
+          if (p.id !== activeProfileId) return p;
+          const currentScores = p.progress?.gameScores || {};
+          const bestScore = currentScores[gameId] || 0;
+          
+          if (score > bestScore) {
+              return {
+                  ...p,
+                  progress: {
+                      ...p.progress,
+                      gameScores: {
+                          ...currentScores,
+                          [gameId]: score
+                      }
+                  }
+              }
+          }
+          return p;
+      }));
+  };
+
+  const deleteProfile = (id: string) => {
+    setProfiles(prev => prev.filter(p => p.id !== id));
+    if (activeProfileId === id) setActiveProfileId(null);
+  };
+
   const logout = () => {
     setActiveProfileId(null);
   };
 
   return (
-    <UserContext.Provider value={{ profiles, activeProfile, addProfile, switchProfile, updateActiveProfile, logout }}>
+    <UserContext.Provider value={{ profiles, activeProfile, addProfile, switchProfile, updateActiveProfile, completeLesson, saveGameScore, deleteProfile, logout }}>
       {children}
     </UserContext.Provider>
   );

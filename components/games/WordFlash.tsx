@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { Volume2, ChevronRight, RotateCw, Star } from 'lucide-react';
 import { KIDS_FLASHCARDS } from '../../constants';
@@ -38,7 +37,7 @@ export const WordFlash = () => {
     };
 
     return (
-        <Layout title="Word Flash" showBack backPath="/kids/games" isKidsMode hideBottomNav>
+        <Layout title="Word Flash" showBack isKidsMode hideBottomNav>
             <div className="flex flex-col items-center h-[calc(100vh-140px)] justify-between pb-4">
               
               {/* Progress Dots */}

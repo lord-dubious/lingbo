@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Type, Pencil, ChevronRight, Volume2, Eraser, CheckCircle, Loader2 } from 'lucide-react';
 import Layout from '../components/Layout';
@@ -263,7 +262,7 @@ const TraceBook = () => {
   }
 
   return (
-    <Layout title={mode === 'letters' ? 'Trace Letters' : 'Trace Words'} showBack backPath="/kids/trace" isKidsMode hideBottomNav>
+    <Layout title={mode === 'letters' ? 'Trace Letters' : 'Trace Words'} showBack onBack={() => setMode(null)} isKidsMode hideBottomNav>
        <div className="flex flex-col items-center gap-6">
           <div className="flex items-center justify-between w-full max-w-lg px-2">
              <button onClick={handlePrev} className="p-4 bg-white rounded-2xl shadow-sm border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 text-gray-400 hover:text-blue-500 transition-all"><ChevronRight className="rotate-180" size={32}/></button>
