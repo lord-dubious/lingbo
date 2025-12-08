@@ -59,13 +59,17 @@ export const generateIgboSpeech = async (text: string): Promise<string | null> =
   
   try {
     const ai = getClient();
+    // Improved Logic: Explicitly instruct the model to pronounce as Igbo with specific attention to tones
+    const promptText = `Pronounce the following text clearly in Igbo, paying strict attention to tonality and diacritics: "${text}"`;
+
     const response = await ai.models.generateContent({
       model: "gemini-2.5-flash-preview-tts",
-      contents: [{ parts: [{ text: text }] }],
+      contents: [{ parts: [{ text: promptText }] }],
       config: {
         responseModalities: [Modality.AUDIO],
         speechConfig: {
           voiceConfig: {
+            // Using Zephyr as it tends to have a deeper, more neutral tone suitable for West African accents
             prebuiltVoiceConfig: { voiceName: 'Zephyr' }, 
           },
         },

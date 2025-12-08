@@ -10,11 +10,17 @@ import Onboarding from './pages/Onboarding';
 import Hub from './pages/Hub';
 import { AdultDashboard, LessonView } from './pages/Adults';
 import { KidsDashboard, KidsGameMenu } from './pages/Kids';
-import { FlashcardWrapper, SentenceGameWrapper, MemoryGameWrapper, SpeedGameWrapper } from './pages/KidsGames';
 import TraceBook from './pages/TraceBook';
-import { Library, WorkbookViewer, VideoLibrary, AlphabetBoard, NumbersBoard } from './pages/Resources';
+import { AlphabetBoard, NumbersBoard } from './pages/ReferenceTools';
+import { Library, WorkbookViewer, VideoLibrary } from './pages/MediaLibrary';
 import { SpeakPractice } from './pages/Practice';
 import ProfilePage from './pages/ProfilePage';
+
+// Games
+import WordFlash from './components/games/WordFlash';
+import SentencePuzzle from './components/games/SentencePuzzle';
+import MemoryMatch from './components/games/MemoryMatch';
+import SpeedTap from './components/games/SpeedTap';
 
 const App = () => {
   return (
@@ -35,10 +41,10 @@ const App = () => {
           <Route path="/kids" element={<RequireAuth><KidsDashboard /></RequireAuth>} />
           <Route path="/kids/games" element={<RequireAuth><KidsGameMenu /></RequireAuth>} /> 
           
-          <Route path="/kids/game/words" element={<RequireAuth><FlashcardWrapper /></RequireAuth>} />
-          <Route path="/kids/game/sentence" element={<RequireAuth><SentenceGameWrapper /></RequireAuth>} />
-          <Route path="/kids/game/memory" element={<RequireAuth><MemoryGameWrapper /></RequireAuth>} />
-          <Route path="/kids/game/speed" element={<RequireAuth><SpeedGameWrapper /></RequireAuth>} />
+          <Route path="/kids/game/words" element={<RequireAuth><WordFlash /></RequireAuth>} />
+          <Route path="/kids/game/sentence" element={<RequireAuth><SentencePuzzle /></RequireAuth>} />
+          <Route path="/kids/game/memory" element={<RequireAuth><MemoryMatch /></RequireAuth>} />
+          <Route path="/kids/game/speed" element={<RequireAuth><SpeedTap /></RequireAuth>} />
           
           <Route path="/kids/trace" element={<RequireAuth><TraceBook /></RequireAuth>} />
           
