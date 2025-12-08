@@ -1,0 +1,28 @@
+{
+  "expo": {
+    "name": "LingBo - Igbo Learning",
+    "slug": "lingbo-igbo-learning",
+    "version": "1.0.0",
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTabletMode": true,
+      "bundleIdentifier": "com.lingbo.igbolearning"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "package": "com.lingbo.igbolearning"
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      ["expo-av"],
+      ["expo-speech"],
+      ["expo-camera"],
+      ["expo-image-picker"]
+    ]
+  }
+}
