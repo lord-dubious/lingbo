@@ -112,41 +112,46 @@ export default function LessonView() {
                  <StyledText className="font-bold text-orange-700">Quiz Score: {quizScore}</StyledText>
              </StyledView>
 
-             {quizLesson.activities?.map((q, i) => (
-                <StyledView key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
-                   <StyledText className="font-bold text-gray-800 mb-4 text-base">Q{i+1}: {q.question || q.instruction}</StyledText>
+             {quizLesson.activities?.map((q, i) => {
+                // Type narrowing hack/check
+                const questionText = 'question' in q ? q.question : q.instruction;
 
-                   {q.quiz_type === 'multiple_choice_3_options' && (
-                      <StyledView className="gap-2">
-                         {q.options?.map(opt => (
-                            <StyledTouchableOpacity
-                                key={opt}
-                                onPress={() => handleQuizAnswer(opt === q.correct_answer, i)}
-                                disabled={answeredMap[i]}
-                                className={`w-full p-3 border rounded-lg ${answeredMap[i] && opt === q.correct_answer ? 'bg-green-50 border-green-500' : answeredMap[i] ? 'opacity-50' : 'bg-white border-gray-200 active:bg-blue-50'}`}
-                            >
-                                <StyledText className={`font-medium ${answeredMap[i] && opt === q.correct_answer ? 'text-green-700' : 'text-gray-700'}`}>{opt}</StyledText>
-                            </StyledTouchableOpacity>
-                         ))}
-                      </StyledView>
-                   )}
+                return (
+                    <StyledView key={i} className="bg-white p-6 rounded-xl shadow-sm border border-gray-100">
+                    <StyledText className="font-bold text-gray-800 mb-4 text-base">Q{i+1}: {questionText}</StyledText>
 
-                   {q.quiz_type === 'match_picture_to_word' && (
-                      <StyledView className="flex-row flex-wrap justify-between gap-2">
-                         {q.options?.map(opt => (
-                            <StyledTouchableOpacity
-                                key={opt}
-                                onPress={() => handleQuizAnswer(opt === q.correct_answer, i)}
-                                disabled={answeredMap[i]}
-                                className={`w-[30%] aspect-square border rounded-lg overflow-hidden ${answeredMap[i] && opt === q.correct_answer ? 'border-green-500 border-2' : 'border-gray-200'}`}
-                            >
-                                <StyledImage source={{ uri: opt }} className="w-full h-full" resizeMode="cover"/>
-                            </StyledTouchableOpacity>
-                         ))}
-                      </StyledView>
-                   )}
-                </StyledView>
-             ))}
+                    {q.quiz_type === 'multiple_choice_3_options' && (
+                        <StyledView className="gap-2">
+                            {q.options?.map(opt => (
+                                <StyledTouchableOpacity
+                                    key={opt}
+                                    onPress={() => handleQuizAnswer(opt === q.correct_answer, i)}
+                                    disabled={answeredMap[i]}
+                                    className={`w-full p-3 border rounded-lg ${answeredMap[i] && opt === q.correct_answer ? 'bg-green-50 border-green-500' : answeredMap[i] ? 'opacity-50' : 'bg-white border-gray-200 active:bg-blue-50'}`}
+                                >
+                                    <StyledText className={`font-medium ${answeredMap[i] && opt === q.correct_answer ? 'text-green-700' : 'text-gray-700'}`}>{opt}</StyledText>
+                                </StyledTouchableOpacity>
+                            ))}
+                        </StyledView>
+                    )}
+
+                    {q.quiz_type === 'match_picture_to_word' && (
+                        <StyledView className="flex-row flex-wrap justify-between gap-2">
+                            {q.options?.map(opt => (
+                                <StyledTouchableOpacity
+                                    key={opt}
+                                    onPress={() => handleQuizAnswer(opt === q.correct_answer, i)}
+                                    disabled={answeredMap[i]}
+                                    className={`w-[30%] aspect-square border rounded-lg overflow-hidden ${answeredMap[i] && opt === q.correct_answer ? 'border-green-500 border-2' : 'border-gray-200'}`}
+                                >
+                                    <StyledImage source={{ uri: opt }} className="w-full h-full" resizeMode="cover"/>
+                                </StyledTouchableOpacity>
+                            ))}
+                        </StyledView>
+                    )}
+                    </StyledView>
+                );
+             })}
 
              <StyledTouchableOpacity onPress={finishQuiz} className="w-full bg-green-500 py-4 rounded-xl shadow-lg items-center mt-4">
                  <StyledText className="text-white font-bold text-lg">Submit Quiz</StyledText>
