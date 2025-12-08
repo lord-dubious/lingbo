@@ -1,47 +1,91 @@
 import React from 'react';
 import { useRouter } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { ArrowLeft, Volume2 } from 'lucide-react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView
+} from 'react-native';
+import { Volume2 } from 'lucide-react-native';
+import Layout from '@/components/Layout';
 import { IGBO_ALPHABET_FULL } from '@/constants';
+import { generateIgboSpeech } from '@/services/geminiService';
+import { playPCMAudio } from '@/utils/audioUtils';
 
 export default function AlphabetBoard() {
-    const router = useRouter();
+    const handlePlay = async (letter: string) => {
+        try {
+            const b64 = await generateIgboSpeech(letter);
+            if (b64) {
+                await playPCMAudio(b64);
+            }
+        } catch (e) {
+            console.error('Playback failed', e);
+        }
+    };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <ArrowLeft size={24} color="#374151" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Alphabet - Abidii</Text>
-                <View style={{ width: 44 }} />
-            </View>
-
-            <ScrollView contentContainerStyle={styles.grid}>
-                {IGBO_ALPHABET_FULL.map((letter, i) => (
-                    <TouchableOpacity key={i} style={styles.letterCard}>
-                        <Text style={styles.letter}>{letter}</Text>
-                        <View style={styles.speakIcon}>
-                            <Volume2 size={16} color="#9333ea" />
-                        </View>
-                    </TouchableOpacity>
-                ))}
+        <Layout title="Abidii (Alphabet)" showBack>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            >
+                <View style={styles.grid}>
+                    {IGBO_ALPHABET_FULL.map((char) => (
+                        <TouchableOpacity
+                            key={char}
+                            onPress={() => handlePlay(char)}
+                            style={styles.letterCard}
+                            activeOpacity={0.7}
+                        >
+                            <Text style={styles.letter}>{char}</Text>
+                            <View style={styles.speakBadge}>
+                                <Volume2 size={14} color="#9333ea" />
+                            </View>
+                        </TouchableOpacity>
+                    ))}
+                </View>
             </ScrollView>
-        </SafeAreaView>
+        </Layout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
-    backButton: { width: 44, height: 44, backgroundColor: 'white', borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#1f2937' },
-    grid: { flexDirection: 'row', flexWrap: 'wrap', padding: 16, gap: 12, justifyContent: 'center' },
-    letterCard: {
-        width: 80, height: 80, backgroundColor: 'white', borderRadius: 16,
-        justifyContent: 'center', alignItems: 'center',
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    content: {
+        paddingBottom: 32,
     },
-    letter: { fontSize: 32, fontWeight: 'bold', color: '#9333ea' },
-    speakIcon: { position: 'absolute', bottom: 8, right: 8 },
+    grid: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 12,
+        justifyContent: 'center',
+    },
+    letterCard: {
+        width: 72,
+        height: 72,
+        backgroundColor: 'white',
+        borderRadius: 16,
+        justifyContent: 'center',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+        position: 'relative',
+    },
+    letter: {
+        fontSize: 28,
+        fontWeight: 'bold',
+        color: '#9333ea',
+    },
+    speakBadge: {
+        position: 'absolute',
+        bottom: 6,
+        right: 6,
+        backgroundColor: '#f3e8ff',
+        padding: 4,
+        borderRadius: 8,
+    },
 });

@@ -5,7 +5,6 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
     ScrollView
 } from 'react-native';
 import {
@@ -16,7 +15,7 @@ import {
     Hash,
     Pencil,
 } from 'lucide-react-native';
-import { ArrowLeft } from 'lucide-react-native';
+import Layout from '@/components/Layout';
 import { useUser } from '@/context/UserContext';
 
 interface MenuItem {
@@ -42,20 +41,10 @@ export default function KidsDashboard() {
     ];
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <ArrowLeft size={24} color="#374151" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Kids Corner</Text>
-                <View style={{ width: 44 }} />
-            </View>
-
+        <Layout title="Kids Corner" showBack backPath="/hub" isKidsMode>
             <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
             >
                 {/* Greeting */}
                 <View style={styles.greetingCard}>
@@ -83,7 +72,7 @@ export default function KidsDashboard() {
                                 <View style={styles.menuItemDecor1} />
                                 <View style={styles.menuItemDecor2} />
                                 <View style={styles.menuItemContent}>
-                                    <IconComponent size={56} color="white" />
+                                    <IconComponent size={48} color="white" />
                                 </View>
                                 <View style={styles.menuItemLabel}>
                                     <Text style={styles.menuItemTitle}>{item.label}</Text>
@@ -94,45 +83,12 @@ export default function KidsDashboard() {
                     })}
                 </View>
             </ScrollView>
-        </SafeAreaView>
+        </Layout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#fef3c7',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-    },
-    backButton: {
-        width: 44,
-        height: 44,
-        backgroundColor: 'white',
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    headerTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        color: '#1f2937',
-    },
-    scrollView: {
-        flex: 1,
-    },
     content: {
-        padding: 16,
         paddingBottom: 32,
     },
     greetingCard: {
@@ -150,7 +106,7 @@ const styles = StyleSheet.create({
         fontSize: 48,
     },
     greetingTitle: {
-        fontSize: 28,
+        fontSize: 26,
         fontWeight: 'bold',
         color: '#1f2937',
     },
@@ -169,7 +125,7 @@ const styles = StyleSheet.create({
         aspectRatio: 1,
         borderRadius: 24,
         overflow: 'hidden',
-        borderBottomWidth: 8,
+        borderBottomWidth: 6,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.2,
@@ -177,6 +133,7 @@ const styles = StyleSheet.create({
         elevation: 6,
         justifyContent: 'center',
         alignItems: 'center',
+        position: 'relative',
     },
     menuItemDecor1: {
         position: 'absolute',
@@ -204,7 +161,7 @@ const styles = StyleSheet.create({
         marginTop: 8,
     },
     menuItemTitle: {
-        fontSize: 24,
+        fontSize: 22,
         fontWeight: 'bold',
         color: 'white',
         textShadowColor: 'rgba(0,0,0,0.1)',
@@ -212,11 +169,11 @@ const styles = StyleSheet.create({
         textShadowRadius: 4,
     },
     menuItemSub: {
-        fontSize: 12,
+        fontSize: 11,
         fontWeight: 'bold',
         color: 'rgba(255,255,255,0.9)',
         textTransform: 'uppercase',
         letterSpacing: 1,
-        marginTop: 4,
+        marginTop: 2,
     },
 });

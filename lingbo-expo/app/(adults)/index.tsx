@@ -5,7 +5,6 @@ import {
     Text,
     TouchableOpacity,
     StyleSheet,
-    SafeAreaView,
     ScrollView,
     Image
 } from 'react-native';
@@ -14,9 +13,9 @@ import {
     BookOpen,
     Lock,
     ChevronRight,
-    CheckCircle,
-    ArrowLeft
+    CheckCircle
 } from 'lucide-react-native';
+import Layout from '@/components/Layout';
 import { useUser } from '@/context/UserContext';
 import { ADULT_CURRICULUM, FUN_FACTS } from '@/constants';
 
@@ -32,32 +31,22 @@ export default function AdultDashboard() {
     const completedLessons = activeProfile?.progress?.completedLessons || [];
 
     return (
-        <SafeAreaView style={styles.container}>
-            {/* Header */}
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <ArrowLeft size={24} color="#374151" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Curriculum</Text>
-                <View style={{ width: 44 }} />
-            </View>
-
+        <Layout title="Curriculum" showBack backPath="/hub">
             <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.content}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
             >
                 {/* Welcome Card */}
                 <View style={styles.welcomeCard}>
-                    <View>
-                        <Text style={styles.welcomeName}>Nnọ, {activeProfile?.name || 'Friend'}!</Text>
+                    <View style={styles.welcomeInfo}>
+                        <Text style={styles.welcomeText}>Nnọ, {activeProfile?.name || 'Friend'}!</Text>
                         <View style={styles.statsRow}>
                             <Text style={styles.levelText}>Level {activeProfile?.level || 1}</Text>
                             <View style={styles.dot} />
                             <Text style={styles.xpText}>{activeProfile?.xp || 0} XP</Text>
                         </View>
                     </View>
-                    <Text style={styles.avatar}>{activeProfile?.avatar}</Text>
+                    <Text style={styles.avatar}>{activeProfile?.avatar || '👤'}</Text>
                 </View>
 
                 {/* Fun Fact */}
@@ -123,16 +112,14 @@ export default function AdultDashboard() {
                                 <View style={[
                                     styles.lessonNumber,
                                     isCompleted && styles.lessonNumberCompleted,
-                                    isUnlocked && !isCompleted && styles.lessonNumberActive,
-                                    !isUnlocked && styles.lessonNumberLocked
+                                    isUnlocked && !isCompleted && styles.lessonNumberActive
                                 ]}>
                                     {isCompleted ? (
                                         <CheckCircle size={24} color="#16a34a" />
                                     ) : (
                                         <Text style={[
                                             styles.lessonNumberText,
-                                            isUnlocked && styles.lessonNumberTextActive,
-                                            !isUnlocked && styles.lessonNumberTextLocked
+                                            isUnlocked && styles.lessonNumberTextActive
                                         ]}>{level.level_id}</Text>
                                     )}
                                 </View>
@@ -140,7 +127,7 @@ export default function AdultDashboard() {
                                     <Text style={styles.lessonLevel}>LEVEL {level.level_id}</Text>
                                     <Text style={styles.lessonTitle}>{level.title}</Text>
                                     {level.description && (
-                                        <Text style={styles.lessonDesc}>{level.description}</Text>
+                                        <Text style={styles.lessonDesc} numberOfLines={2}>{level.description}</Text>
                                     )}
                                 </View>
                             </View>
@@ -153,51 +140,18 @@ export default function AdultDashboard() {
                     );
                 })}
             </ScrollView>
-        </SafeAreaView>
+        </Layout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-    },
-    backButton: {
-        width: 44,
-        height: 44,
-        backgroundColor: 'white',
-        borderRadius: 22,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.1,
-        shadowRadius: 4,
-        elevation: 2,
-    },
-    headerTitle: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        color: '#1f2937',
-    },
-    scrollView: {
-        flex: 1,
-    },
-    content: {
-        padding: 16,
+    scrollContent: {
         paddingBottom: 32,
         gap: 16,
     },
     welcomeCard: {
         backgroundColor: '#fff7ed',
-        padding: 24,
+        padding: 20,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: '#fed7aa',
@@ -205,8 +159,11 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         alignItems: 'center',
     },
-    welcomeName: {
-        fontSize: 24,
+    welcomeInfo: {
+        flex: 1,
+    },
+    welcomeText: {
+        fontSize: 22,
         fontWeight: 'bold',
         color: '#1f2937',
         marginBottom: 4,
@@ -260,7 +217,7 @@ const styles = StyleSheet.create({
     },
     referenceCard: {
         backgroundColor: 'white',
-        padding: 24,
+        padding: 20,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: '#f3f4f6',
@@ -322,7 +279,7 @@ const styles = StyleSheet.create({
     },
     lessonCard: {
         backgroundColor: 'white',
-        padding: 20,
+        padding: 16,
         borderRadius: 16,
         borderWidth: 2,
         borderColor: '#f3f4f6',
@@ -337,13 +294,14 @@ const styles = StyleSheet.create({
     lessonRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        gap: 20,
+        gap: 16,
         flex: 1,
     },
     lessonNumber: {
         width: 48,
         height: 48,
         borderRadius: 24,
+        backgroundColor: '#e5e7eb',
         justifyContent: 'center',
         alignItems: 'center',
     },
@@ -353,18 +311,13 @@ const styles = StyleSheet.create({
     lessonNumberActive: {
         backgroundColor: '#ffedd5',
     },
-    lessonNumberLocked: {
-        backgroundColor: '#e5e7eb',
-    },
     lessonNumberText: {
         fontSize: 18,
         fontWeight: 'bold',
+        color: '#6b7280',
     },
     lessonNumberTextActive: {
         color: '#ea580c',
-    },
-    lessonNumberTextLocked: {
-        color: '#6b7280',
     },
     lessonInfo: {
         flex: 1,
@@ -376,13 +329,13 @@ const styles = StyleSheet.create({
         letterSpacing: 1,
     },
     lessonTitle: {
-        fontSize: 20,
+        fontSize: 18,
         fontWeight: 'bold',
         color: '#1f2937',
     },
     lessonDesc: {
-        fontSize: 14,
+        fontSize: 13,
         color: '#6b7280',
-        marginTop: 4,
+        marginTop: 2,
     },
 });

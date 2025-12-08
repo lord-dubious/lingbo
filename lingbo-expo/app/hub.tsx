@@ -6,24 +6,20 @@ import {
     TouchableOpacity,
     StyleSheet,
     ScrollView,
-    SafeAreaView,
+    Image,
     ActivityIndicator
 } from 'react-native';
-import {
-    Settings,
-    Calendar,
-    Sparkles,
-    Volume2,
-    GraduationCap,
-    ChevronRight,
-    Smile
-} from 'lucide-react-native';
-import { KIDS_FLASHCARDS } from '@/constants';
-import { ProfileType } from '@/types';
 import { LinearGradient } from 'expo-linear-gradient';
+import { Volume2, BookOpen, Gamepad2, Sparkles } from 'lucide-react-native';
+import Layout from '@/components/Layout';
+import { useUser } from '@/context/UserContext';
+import { KIDS_FLASHCARDS } from '@/constants';
+import { generateIgboSpeech } from '@/services/geminiService';
+import { playPCMAudio } from '@/utils/audioUtils';
 
 export default function Hub() {
     const router = useRouter();
+    const { activeProfile } = useUser();
     const [dailyWord, setDailyWord] = useState(KIDS_FLASHCARDS[0]);
     const [audioLoading, setAudioLoading] = useState(false);
 
@@ -34,7 +30,7 @@ export default function Hub() {
 
     const getGreeting = () => {
         const hour = new Date().getHours();
-        if (hour < 12) return "Ututu ọma (Good Morning)";
+        if (hour < 12) return "Ụtụtụ ọma (Good Morning)";
         if (hour < 18) return "Ehihie ọma (Good Afternoon)";
         return "Mgbede ọma (Good Evening)";
     };
@@ -42,250 +38,167 @@ export default function Hub() {
     const handlePlayWord = async () => {
         if (audioLoading) return;
         setAudioLoading(true);
-        // TODO: Implement audio playback with expo-av
-        setTimeout(() => setAudioLoading(false), 1000);
-    };
-
-    const handleSelectMode = (type: ProfileType) => {
-        if (type === 'adult') {
-            router.push('/(adults)');
-        } else {
-            router.push('/(kids)');
+        try {
+            const b64 = await generateIgboSpeech(dailyWord.igbo);
+            if (b64) {
+                await playPCMAudio(b64);
+            }
+        } catch (e) {
+            console.error("Failed to play audio", e);
+        } finally {
+            setAudioLoading(false);
         }
     };
 
     return (
-        <SafeAreaView style={styles.container}>
+        <Layout title="Lingbo">
             <ScrollView
-                style={styles.scrollView}
-                contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.scrollContent}
             >
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={styles.logoContainer}>
-                        <Text style={styles.logoEmoji}>📚</Text>
-                        <Text style={styles.logoText}>Lingbo</Text>
-                    </View>
-                    <TouchableOpacity
-                        onPress={() => router.push('/profile')}
-                        style={styles.settingsButton}
-                    >
-                        <Settings size={20} color="#6b7280" />
-                    </TouchableOpacity>
-                </View>
-
                 {/* Greeting */}
-                <View style={styles.greetingContainer}>
-                    <Text style={styles.greetingTitle}>{getGreeting()}</Text>
-                    <Text style={styles.greetingSubtitle}>Let's learn something new today.</Text>
+                <View style={styles.greetingSection}>
+                    <Text style={styles.greeting}>{getGreeting()}</Text>
+                    <Text style={styles.welcomeText}>
+                        Welcome back, <Text style={styles.nameText}>{activeProfile?.name || 'Learner'}</Text>!
+                    </Text>
                 </View>
 
                 {/* Daily Word Card */}
-                <View style={styles.dailyWordCard}>
-                    <LinearGradient
-                        colors={['#f97316', '#ec4899']}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 0 }}
-                        style={styles.dailyWordGradient}
-                    >
-                        <View style={styles.sparklesContainer}>
-                            <Sparkles size={120} color="rgba(255,255,255,0.1)" />
+                <LinearGradient
+                    colors={['#f97316', '#ea580c']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 1 }}
+                    style={styles.dailyWordCard}
+                >
+                    <View style={styles.sparkleContainer}>
+                        <Sparkles size={20} color="rgba(255,255,255,0.5)" />
+                    </View>
+
+                    <Text style={styles.dailyWordLabel}>Word of the Day</Text>
+
+                    <View style={styles.dailyWordContent}>
+                        <View style={styles.dailyWordTextContainer}>
+                            <Text style={styles.dailyWordIgbo}>{dailyWord.igbo}</Text>
+                            <Text style={styles.dailyWordEnglish}>{dailyWord.english}</Text>
                         </View>
-                        <View style={styles.dailyWordContent}>
-                            <View style={styles.dailyWordLeft}>
-                                <View style={styles.dailyWordLabel}>
-                                    <View style={styles.calendarIcon}>
-                                        <Calendar size={16} color="white" />
-                                    </View>
-                                    <Text style={styles.dailyWordLabelText}>DAILY WORD</Text>
-                                </View>
-                                <Text style={styles.dailyWordIgbo}>{dailyWord.igbo}</Text>
-                                <Text style={styles.dailyWordEnglish}>{dailyWord.english}</Text>
-                            </View>
-                            <TouchableOpacity
-                                onPress={handlePlayWord}
-                                style={styles.playButton}
-                                disabled={audioLoading}
-                            >
-                                {audioLoading ? (
-                                    <ActivityIndicator size="small" color="#f97316" />
-                                ) : (
-                                    <Volume2 size={28} color="#f97316" />
-                                )}
-                            </TouchableOpacity>
-                        </View>
-                    </LinearGradient>
-                </View>
+
+                        <TouchableOpacity
+                            onPress={handlePlayWord}
+                            style={styles.playButton}
+                            disabled={audioLoading}
+                        >
+                            {audioLoading ? (
+                                <ActivityIndicator color="#f97316" />
+                            ) : (
+                                <Volume2 size={28} color="#f97316" />
+                            )}
+                        </TouchableOpacity>
+                    </View>
+                </LinearGradient>
 
                 {/* Mode Selection */}
+                <Text style={styles.sectionTitle}>Start Learning</Text>
+
                 <View style={styles.modeGrid}>
-                    {/* Adult Learning */}
+                    {/* Adult Mode */}
                     <TouchableOpacity
-                        onPress={() => handleSelectMode('adult')}
+                        onPress={() => router.push('/(adults)')}
                         style={styles.modeCard}
-                        activeOpacity={0.8}
                     >
-                        <View style={styles.modeCardInner}>
-                            <View style={styles.modeCardHeader}>
-                                <View style={styles.modeIconContainer}>
-                                    <GraduationCap size={24} color="#f97316" />
-                                </View>
-                                <View style={styles.chevronContainer}>
-                                    <ChevronRight size={16} color="#6b7280" />
-                                </View>
-                            </View>
+                        <LinearGradient
+                            colors={['#3b82f6', '#1d4ed8']}
+                            style={styles.modeCardGradient}
+                        >
+                            <BookOpen size={48} color="white" />
                             <Text style={styles.modeTitle}>Adult Learning</Text>
-                            <Text style={styles.modeDescription}>
-                                Structured lessons, grammar rules, and cultural deep dives.
-                            </Text>
-                            <View style={styles.avatarStack}>
-                                <View style={[styles.avatar, { backgroundColor: '#d1d5db' }]} />
-                                <View style={[styles.avatar, { backgroundColor: '#9ca3af', marginLeft: -8 }]} />
-                                <View style={[styles.avatar, styles.avatarCount, { marginLeft: -8 }]}>
-                                    <Text style={styles.avatarCountText}>+3</Text>
-                                </View>
-                            </View>
-                        </View>
+                            <Text style={styles.modeSubtitle}>Structured Lessons</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
 
-                    {/* Kids Corner */}
+                    {/* Kids Mode */}
                     <TouchableOpacity
-                        onPress={() => handleSelectMode('kid')}
+                        onPress={() => router.push('/(kids)')}
                         style={styles.modeCard}
-                        activeOpacity={0.8}
                     >
-                        <View style={[styles.modeCardInner, styles.modeCardKids]}>
-                            <View style={styles.modeCardHeader}>
-                                <View style={[styles.modeIconContainer, { backgroundColor: 'white' }]}>
-                                    <Smile size={24} color="#eab308" />
-                                </View>
-                                <View style={[styles.chevronContainer, styles.chevronKids]}>
-                                    <ChevronRight size={16} color="#a16207" />
-                                </View>
-                            </View>
+                        <LinearGradient
+                            colors={['#f472b6', '#db2777']}
+                            style={styles.modeCardGradient}
+                        >
+                            <Gamepad2 size={48} color="white" />
                             <Text style={styles.modeTitle}>Kids Corner</Text>
-                            <Text style={styles.modeDescription}>
-                                Interactive games, tracing books, and stories for children.
-                            </Text>
-                            <View style={styles.tagContainer}>
-                                <View style={styles.tag}>
-                                    <Text style={styles.tagText}>Games</Text>
-                                </View>
-                                <View style={styles.tag}>
-                                    <Text style={styles.tagText}>Stories</Text>
-                                </View>
-                                <View style={styles.tag}>
-                                    <Text style={styles.tagText}>ABC</Text>
-                                </View>
-                            </View>
-                        </View>
+                            <Text style={styles.modeSubtitle}>Fun & Games</Text>
+                        </LinearGradient>
                     </TouchableOpacity>
                 </View>
+
+                {/* Quick Stats */}
+                <View style={styles.statsRow}>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statValue}>🔥 {activeProfile?.streak || 0}</Text>
+                        <Text style={styles.statLabel}>Day Streak</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statValue}>⭐ {activeProfile?.xp || 0}</Text>
+                        <Text style={styles.statLabel}>XP</Text>
+                    </View>
+                    <View style={styles.statItem}>
+                        <Text style={styles.statValue}>📚 Lvl {activeProfile?.level || 1}</Text>
+                        <Text style={styles.statLabel}>Level</Text>
+                    </View>
+                </View>
             </ScrollView>
-        </SafeAreaView>
+        </Layout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#f5f5f5',
-    },
-    scrollView: {
-        flex: 1,
-    },
     scrollContent: {
-        padding: 16,
-        paddingBottom: 100,
+        paddingBottom: 32,
+        gap: 24,
     },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 24,
+    greetingSection: {
+        marginBottom: 8,
     },
-    logoContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-    },
-    logoEmoji: {
-        fontSize: 28,
-    },
-    logoText: {
-        fontSize: 20,
+    greeting: {
+        fontSize: 14,
+        color: '#f97316',
         fontWeight: 'bold',
-        color: '#1f2937',
-        letterSpacing: -0.5,
-    },
-    settingsButton: {
-        width: 40,
-        height: 40,
-        backgroundColor: 'white',
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 1,
-        borderColor: '#e5e7eb',
-    },
-    greetingContainer: {
-        marginBottom: 24,
-    },
-    greetingTitle: {
-        fontSize: 28,
-        fontWeight: 'bold',
-        color: '#1f2937',
         marginBottom: 4,
     },
-    greetingSubtitle: {
-        fontSize: 16,
-        color: '#6b7280',
+    welcomeText: {
+        fontSize: 24,
+        color: '#1f2937',
+    },
+    nameText: {
+        fontWeight: 'bold',
     },
     dailyWordCard: {
         borderRadius: 24,
-        overflow: 'hidden',
-        marginBottom: 24,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.15,
-        shadowRadius: 12,
-        elevation: 6,
-    },
-    dailyWordGradient: {
         padding: 24,
         position: 'relative',
         overflow: 'hidden',
     },
-    sparklesContainer: {
+    sparkleContainer: {
         position: 'absolute',
-        top: -20,
-        right: -20,
+        top: 16,
+        right: 16,
+    },
+    dailyWordLabel: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.8)',
+        fontWeight: 'bold',
+        textTransform: 'uppercase',
+        letterSpacing: 1,
+        marginBottom: 12,
     },
     dailyWordContent: {
         flexDirection: 'row',
+        alignItems: 'center',
         justifyContent: 'space-between',
-        alignItems: 'center',
     },
-    dailyWordLeft: {
+    dailyWordTextContainer: {
         flex: 1,
-    },
-    dailyWordLabel: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        marginBottom: 8,
-    },
-    calendarIcon: {
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        padding: 6,
-        borderRadius: 8,
-    },
-    dailyWordLabelText: {
-        color: 'rgba(255,255,255,0.9)',
-        fontSize: 12,
-        fontWeight: 'bold',
-        letterSpacing: 1,
     },
     dailyWordIgbo: {
         fontSize: 36,
@@ -294,14 +207,14 @@ const styles = StyleSheet.create({
         marginBottom: 4,
     },
     dailyWordEnglish: {
-        fontSize: 20,
+        fontSize: 18,
         color: 'rgba(255,255,255,0.9)',
     },
     playButton: {
-        width: 56,
-        height: 56,
+        width: 64,
+        height: 64,
         backgroundColor: 'white',
-        borderRadius: 28,
+        borderRadius: 32,
         justifyContent: 'center',
         alignItems: 'center',
         shadowColor: '#000',
@@ -310,108 +223,66 @@ const styles = StyleSheet.create({
         shadowRadius: 8,
         elevation: 4,
     },
+    sectionTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: '#1f2937',
+        marginBottom: 16,
+    },
     modeGrid: {
+        flexDirection: 'row',
         gap: 16,
     },
     modeCard: {
-        backgroundColor: 'white',
+        flex: 1,
         borderRadius: 24,
-        padding: 4,
+        overflow: 'hidden',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 12,
+        elevation: 6,
+    },
+    modeCardGradient: {
+        padding: 24,
+        alignItems: 'center',
+        gap: 12,
+    },
+    modeTitle: {
+        fontSize: 18,
+        fontWeight: 'bold',
+        color: 'white',
+        textAlign: 'center',
+    },
+    modeSubtitle: {
+        fontSize: 12,
+        color: 'rgba(255,255,255,0.8)',
+        textAlign: 'center',
+    },
+    statsRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    statItem: {
+        flex: 1,
+        backgroundColor: 'white',
+        padding: 16,
+        borderRadius: 16,
+        alignItems: 'center',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.05,
         shadowRadius: 8,
         elevation: 2,
-        borderWidth: 1,
-        borderColor: '#f3f4f6',
     },
-    modeCardInner: {
-        backgroundColor: '#f9fafb',
-        borderRadius: 20,
-        padding: 20,
-        borderWidth: 1,
-        borderColor: 'white',
-    },
-    modeCardKids: {
-        backgroundColor: 'rgba(254, 249, 195, 0.5)',
-    },
-    modeCardHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        marginBottom: 16,
-    },
-    modeIconContainer: {
-        width: 48,
-        height: 48,
-        backgroundColor: 'white',
-        borderRadius: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-        elevation: 1,
-        borderWidth: 1,
-        borderColor: '#f3f4f6',
-    },
-    chevronContainer: {
-        backgroundColor: '#e5e7eb',
-        padding: 6,
-        borderRadius: 12,
-    },
-    chevronKids: {
-        backgroundColor: '#fde68a',
-    },
-    modeTitle: {
+    statValue: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#1f2937',
         marginBottom: 4,
     },
-    modeDescription: {
-        fontSize: 14,
-        color: '#6b7280',
-        lineHeight: 20,
-        marginBottom: 16,
-    },
-    avatarStack: {
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    avatar: {
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        borderWidth: 2,
-        borderColor: 'white',
-    },
-    avatarCount: {
-        backgroundColor: '#e5e7eb',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    avatarCountText: {
-        fontSize: 10,
-        fontWeight: 'bold',
-        color: '#6b7280',
-    },
-    tagContainer: {
-        flexDirection: 'row',
-        gap: 8,
-    },
-    tag: {
-        backgroundColor: 'white',
-        paddingHorizontal: 8,
-        paddingVertical: 4,
-        borderRadius: 6,
-        borderWidth: 1,
-        borderColor: '#f3f4f6',
-    },
-    tagText: {
+    statLabel: {
         fontSize: 12,
-        fontWeight: 'bold',
-        color: '#9ca3af',
+        color: '#6b7280',
     },
 });

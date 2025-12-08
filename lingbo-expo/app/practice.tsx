@@ -1,36 +1,88 @@
-import React from 'react';
-import { useRouter } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
-import { ArrowLeft, Construction } from 'lucide-react-native';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
+import Layout from '@/components/Layout';
+import TextChat from '@/components/practice/TextChat';
+import LiveChat from '@/components/practice/LiveChat';
+import PronunciationCoach from '@/components/practice/PronunciationCoach';
 
 export default function Practice() {
-    const router = useRouter();
+    const [tab, setTab] = useState<'chat' | 'live' | 'coach'>('chat');
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <ArrowLeft size={24} color="#374151" />
+        <Layout title="AI Tutor" showBack>
+            {/* Tab Selector */}
+            <View style={styles.tabContainer}>
+                <TouchableOpacity
+                    onPress={() => setTab('chat')}
+                    style={[styles.tab, tab === 'chat' && styles.tabActive]}
+                >
+                    <Text style={[styles.tabText, tab === 'chat' && styles.tabTextActive]}>
+                        Chat
+                    </Text>
                 </TouchableOpacity>
-                <Text style={styles.headerTitle}>Practice</Text>
-                <View style={{ width: 44 }} />
+                <TouchableOpacity
+                    onPress={() => setTab('live')}
+                    style={[styles.tab, tab === 'live' && styles.tabActive]}
+                >
+                    <Text style={[styles.tabText, tab === 'live' && styles.tabTextActive]}>
+                        Live
+                    </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    onPress={() => setTab('coach')}
+                    style={[styles.tab, tab === 'coach' && styles.tabActive]}
+                >
+                    <Text style={[styles.tabText, tab === 'coach' && styles.tabTextActive]}>
+                        Coach
+                    </Text>
+                </TouchableOpacity>
             </View>
 
+            {/* Content */}
             <View style={styles.content}>
-                <Construction size={64} color="#f97316" />
-                <Text style={styles.title}>Coming Soon!</Text>
-                <Text style={styles.subtitle}>Speaking practice is being built</Text>
+                {tab === 'chat' && <TextChat />}
+                {tab === 'live' && <LiveChat />}
+                {tab === 'coach' && (
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        <PronunciationCoach />
+                    </ScrollView>
+                )}
             </View>
-        </SafeAreaView>
+        </Layout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
-    backButton: { width: 44, height: 44, backgroundColor: 'white', borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#1f2937' },
-    content: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 16 },
-    title: { fontSize: 28, fontWeight: 'bold', color: '#1f2937' },
-    subtitle: { fontSize: 16, color: '#6b7280' },
+    tabContainer: {
+        flexDirection: 'row',
+        backgroundColor: '#e5e7eb',
+        padding: 4,
+        borderRadius: 12,
+        marginBottom: 16,
+    },
+    tab: {
+        flex: 1,
+        paddingVertical: 8,
+        borderRadius: 8,
+        alignItems: 'center',
+    },
+    tabActive: {
+        backgroundColor: 'white',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 2,
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: 'bold',
+        color: '#6b7280',
+    },
+    tabTextActive: {
+        color: '#f97316',
+    },
+    content: {
+        flex: 1,
+    },
 });

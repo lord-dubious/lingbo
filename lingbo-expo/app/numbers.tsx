@@ -1,49 +1,89 @@
 import React from 'react';
-import { useRouter } from 'expo-router';
-import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ScrollView } from 'react-native';
-import { ArrowLeft, Volume2 } from 'lucide-react-native';
+import {
+    View,
+    Text,
+    TouchableOpacity,
+    StyleSheet,
+    ScrollView
+} from 'react-native';
+import { Volume2 } from 'lucide-react-native';
+import Layout from '@/components/Layout';
 import { IGBO_NUMBERS } from '@/constants';
+import { generateIgboSpeech } from '@/services/geminiService';
+import { playPCMAudio } from '@/utils/audioUtils';
 
 export default function NumbersBoard() {
-    const router = useRouter();
+    const handlePlay = async (word: string) => {
+        try {
+            const b64 = await generateIgboSpeech(word);
+            if (b64) {
+                await playPCMAudio(b64);
+            }
+        } catch (e) {
+            console.error('Playback failed', e);
+        }
+    };
 
     return (
-        <SafeAreaView style={styles.container}>
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-                    <ArrowLeft size={24} color="#374151" />
-                </TouchableOpacity>
-                <Text style={styles.headerTitle}>Numbers - Onuogugu</Text>
-                <View style={{ width: 44 }} />
-            </View>
-
-            <ScrollView contentContainerStyle={styles.list}>
-                {IGBO_NUMBERS.map((item, i) => (
-                    <TouchableOpacity key={i} style={styles.numberCard}>
+        <Layout title="Onuọgụgụ (Numbers)" showBack>
+            <ScrollView
+                showsVerticalScrollIndicator={false}
+                contentContainerStyle={styles.content}
+            >
+                {IGBO_NUMBERS.map((item) => (
+                    <TouchableOpacity
+                        key={item.number}
+                        onPress={() => handlePlay(item.word)}
+                        style={styles.numberCard}
+                        activeOpacity={0.7}
+                    >
                         <View style={styles.numberBadge}>
                             <Text style={styles.number}>{item.number}</Text>
                         </View>
                         <Text style={styles.word}>{item.word}</Text>
-                        <Volume2 size={20} color="#2563eb" />
+                        <Volume2 size={20} color="#3b82f6" />
                     </TouchableOpacity>
                 ))}
             </ScrollView>
-        </SafeAreaView>
+        </Layout>
     );
 }
 
 const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: '#f5f5f5' },
-    header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingVertical: 12 },
-    backButton: { width: 44, height: 44, backgroundColor: 'white', borderRadius: 22, justifyContent: 'center', alignItems: 'center' },
-    headerTitle: { fontSize: 20, fontWeight: 'bold', color: '#1f2937' },
-    list: { padding: 16, gap: 12 },
-    numberCard: {
-        backgroundColor: 'white', borderRadius: 16, padding: 16,
-        flexDirection: 'row', alignItems: 'center', gap: 16,
-        shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2,
+    content: {
+        paddingBottom: 32,
+        gap: 12,
     },
-    numberBadge: { width: 48, height: 48, backgroundColor: '#dbeafe', borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
-    number: { fontSize: 20, fontWeight: 'bold', color: '#2563eb' },
-    word: { flex: 1, fontSize: 20, fontWeight: 'bold', color: '#1f2937' },
+    numberCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 16,
+        backgroundColor: 'white',
+        padding: 16,
+        borderRadius: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+        elevation: 2,
+    },
+    numberBadge: {
+        width: 48,
+        height: 48,
+        backgroundColor: '#dbeafe',
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    number: {
+        fontSize: 22,
+        fontWeight: 'bold',
+        color: '#2563eb',
+    },
+    word: {
+        flex: 1,
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#1f2937',
+    },
 });
