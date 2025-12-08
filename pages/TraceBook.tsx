@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useRef } from 'react';
 import { Type, Pencil, ChevronRight, Volume2, Eraser, CheckCircle, Loader2 } from 'lucide-react';
 import Layout from '../components/Layout';
@@ -5,6 +6,8 @@ import { IGBO_ALPHABET_FULL } from '../constants';
 import { generateIgboSpeech, gradeHandwriting } from '../services/geminiService';
 import { playPCMAudio, playGameSound } from '../utils/audioUtils';
 import { ConfettiOverlay } from '../components/ConfettiOverlay';
+import { useUser } from '../context/UserContext';
+import TutorialOverlay from '../components/TutorialOverlay';
 
 // --- Canvas Tracer ---
 const CanvasTracer = ({ text, subtext }: { text: string, subtext?: string }) => {
@@ -35,10 +38,6 @@ const CanvasTracer = ({ text, subtext }: { text: string, subtext?: string }) => 
     }
 
     drawTemplate(ctx, rect?.width || 300, rect?.height || 300, text);
-    
-    const preventDefault = (e: TouchEvent) => e.preventDefault();
-    canvas.addEventListener('touchmove', preventDefault, { passive: false });
-    return () => canvas.removeEventListener('touchmove', preventDefault);
   }, [text]);
 
   const drawTemplate = (ctx: CanvasRenderingContext2D, w: number, h: number, txt: string) => {
@@ -148,7 +147,8 @@ const CanvasTracer = ({ text, subtext }: { text: string, subtext?: string }) => 
             />
        )}
        
-       <div className="bg-white p-2 rounded-3xl shadow-xl border-4 border-blue-100 w-full aspect-[4/3] relative touch-none overflow-hidden">
+       {/* Added touch-none to prevent scrolling while drawing */}
+       <div className="bg-white p-2 rounded-3xl shadow-xl border-4 border-blue-100 w-full aspect-[4/3] relative touch-none overflow-hidden select-none">
           <canvas 
              ref={canvasRef}
              onMouseDown={startDrawing}
@@ -158,24 +158,24 @@ const CanvasTracer = ({ text, subtext }: { text: string, subtext?: string }) => 
              onTouchStart={startDrawing}
              onTouchMove={draw}
              onTouchEnd={stopDrawing}
-             className="w-full h-full rounded-2xl cursor-crosshair bg-white"
+             className="w-full h-full rounded-2xl cursor-crosshair bg-white touch-none"
           />
           
           <div className="absolute top-4 right-4 flex flex-col gap-2">
-            <button onClick={clear} className="p-3 bg-gray-100 rounded-full text-gray-500 hover:bg-red-100 hover:text-red-500 transition-colors shadow-sm" title="Clear">
+            <button onClick={clear} className="p-3 bg-gray-100 rounded-full text-gray-500 hover:bg-red-100 hover:text-red-500 transition-colors shadow-sm active:scale-90" title="Clear">
                 <Eraser size={24} />
             </button>
           </div>
 
           {grading && (
-              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in">
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center animate-in fade-in z-20">
                   <Loader2 size={48} className="text-blue-500 animate-spin mb-4" />
                   <p className="font-kids font-bold text-xl text-blue-600">Checking...</p>
               </div>
           )}
 
           {gradeResult && gradeResult.score <= 80 && (
-              <div className="absolute inset-x-0 bottom-0 bg-white/95 p-4 border-t-2 border-yellow-100 animate-in slide-in-from-bottom">
+              <div className="absolute inset-x-0 bottom-0 bg-white/95 p-4 border-t-2 border-yellow-100 animate-in slide-in-from-bottom z-20">
                   <div className="flex items-center gap-3">
                       <div className="text-3xl">💪</div>
                       <div>
@@ -196,9 +196,9 @@ const CanvasTracer = ({ text, subtext }: { text: string, subtext?: string }) => 
              onClick={handleGrade}
              disabled={!hasDrawn || grading || !!gradeResult}
              className={`
-                flex items-center gap-2 px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all
+                flex items-center gap-2 px-8 py-3 rounded-full font-bold text-lg shadow-lg transition-all active:scale-95
                 ${hasDrawn && !gradeResult 
-                    ? 'bg-green-500 text-white hover:bg-green-600 hover:scale-105 shadow-green-200' 
+                    ? 'bg-green-500 text-white hover:bg-green-600 shadow-green-200' 
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'}
              `}
            >
@@ -214,6 +214,20 @@ const TraceBook = () => {
   const [mode, setMode] = useState<'letters' | 'sentences' | null>(null);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const { activeProfile, markTutorialSeen } = useUser();
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+    if (activeProfile && (!activeProfile.progress?.tutorialsSeen?.includes('trace_book'))) {
+        setShowTutorial(true);
+    }
+  }, []);
+
+  const handleTutorialComplete = () => {
+      setShowTutorial(false);
+      markTutorialSeen('trace_book');
+  };
+
   const letters = IGBO_ALPHABET_FULL;
   const sentences = [
     { text: "Nno", meaning: "Welcome" },
@@ -225,12 +239,6 @@ const TraceBook = () => {
 
   const currentItem = mode === 'letters' ? letters[currentIndex] : sentences[currentIndex]?.text;
   const currentMeaning = mode === 'sentences' ? sentences[currentIndex]?.meaning : `Letter ${currentItem}`;
-
-  useEffect(() => {
-     if (mode && currentItem) {
-        generateIgboSpeech(currentItem).then(b64 => { if (b64) playPCMAudio(b64); });
-     }
-  }, [currentIndex, mode]);
 
   const handleNext = () => {
     if (mode === 'letters') setCurrentIndex(prev => (prev + 1) % letters.length);
@@ -263,15 +271,22 @@ const TraceBook = () => {
 
   return (
     <Layout title={mode === 'letters' ? 'Trace Letters' : 'Trace Words'} showBack onBack={() => setMode(null)} isKidsMode hideBottomNav>
+       {showTutorial && (
+           <TutorialOverlay 
+               type="trace" 
+               message="Trace the letters on the screen with your finger!" 
+               onComplete={handleTutorialComplete} 
+           />
+       )}
        <div className="flex flex-col items-center gap-6">
           <div className="flex items-center justify-between w-full max-w-lg px-2">
              <button onClick={handlePrev} className="p-4 bg-white rounded-2xl shadow-sm border-b-4 border-gray-200 active:border-b-0 active:translate-y-1 text-gray-400 hover:text-blue-500 transition-all"><ChevronRight className="rotate-180" size={32}/></button>
              
              <button 
                 onClick={() => generateIgboSpeech(currentItem).then(b => b && playPCMAudio(b))}
-                className="flex flex-col items-center group"
+                className="flex flex-col items-center group active:scale-95 transition-transform"
              >
-                 <div className="text-6xl font-kids font-bold text-gray-700 mb-1 group-hover:scale-110 transition-transform">{currentItem}</div>
+                 <div className="text-6xl font-kids font-bold text-gray-700 mb-1">{currentItem}</div>
                  <div className="flex items-center gap-1 text-blue-500 text-sm font-bold bg-blue-50 px-2 py-1 rounded-lg">
                     <Volume2 size={14} /> Listen
                  </div>

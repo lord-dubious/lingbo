@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
 import { useUser } from '../context/UserContext';
@@ -9,12 +9,27 @@ const Onboarding = () => {
   const [name, setName] = useState('');
   const { addProfile } = useUser();
   const navigate = useNavigate();
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFinish = () => {
     if (name.trim()) {
       addProfile(name, 'adult');
       navigate('/hub');
     }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      if (step < 2) setStep(step + 1);
+      else handleFinish();
+    }
+  };
+
+  const handleFocus = () => {
+    // Wait for keyboard to slide up then scroll
+    setTimeout(() => {
+        inputRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 300);
   };
 
   const slides = [
@@ -44,9 +59,9 @@ const Onboarding = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center relative">
+    <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center relative overflow-hidden">
       {step > 0 && (
-        <button onClick={() => setStep(step - 1)} className="absolute top-6 left-6 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors">
+        <button onClick={() => setStep(step - 1)} className="absolute top-6 left-6 p-2 bg-gray-100 rounded-full hover:bg-gray-200 transition-colors z-10">
           <ArrowLeft size={24} className="text-gray-700" />
         </button>
       )}
@@ -69,10 +84,13 @@ const Onboarding = () => {
         {slides[step].isInput && (
           <div className="w-full mb-8 animate-in slide-in-from-bottom-8 delay-100">
             <input
+              ref={inputRef}
               type="text"
               placeholder="Enter your name"
               value={name}
               onChange={(e) => setName(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={handleFocus}
               className="w-full px-6 py-4 rounded-xl bg-gray-600 text-white font-bold placeholder:text-gray-300 text-center text-xl outline-none focus:ring-4 focus:ring-primary/30 shadow-lg transition-all"
               autoFocus
             />
@@ -80,7 +98,7 @@ const Onboarding = () => {
         )}
       </div>
 
-      <div className="w-full max-w-sm mt-auto">
+      <div className="w-full max-w-sm mt-auto pb-[env(safe-area-inset-bottom)]">
         {step < 2 ? (
           <button onClick={() => setStep(step + 1)} className="w-full bg-primary text-white font-bold py-4 rounded-xl hover:bg-orange-600 transition-colors text-lg shadow-lg hover:shadow-xl shadow-orange-200">
             Next

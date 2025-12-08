@@ -1,9 +1,12 @@
+
 import React, { useState, useEffect } from 'react';
 import { RefreshCcw, Sparkles, CheckCircle2, Star } from 'lucide-react';
 import { MEMORY_GAME_DATA } from '../../constants';
 import { playGameSound } from '../../utils/audioUtils';
 import Layout from '../Layout';
 import { ConfettiOverlay } from '../ConfettiOverlay';
+import { useUser } from '../../context/UserContext';
+import TutorialOverlay from '../TutorialOverlay';
 
 const MemoryMatch = () => {
   const [cards, setCards] = useState(() => {
@@ -16,6 +19,20 @@ const MemoryMatch = () => {
   const [moves, setMoves] = useState(0);
   const [isChecking, setIsChecking] = useState(false);
   const [showMatchOverlay, setShowMatchOverlay] = useState(false);
+  
+  const { activeProfile, markTutorialSeen } = useUser();
+  const [showTutorial, setShowTutorial] = useState(false);
+
+  useEffect(() => {
+      if (activeProfile && (!activeProfile.progress?.tutorialsSeen?.includes('memory_match'))) {
+          setShowTutorial(true);
+      }
+  }, []);
+  
+  const handleTutorialComplete = () => {
+      setShowTutorial(false);
+      markTutorialSeen('memory_match');
+  };
 
   // Check for match when 2 cards are flipped
   useEffect(() => {
@@ -73,6 +90,13 @@ const MemoryMatch = () => {
 
   return (
      <Layout title="Memory Match" showBack isKidsMode hideBottomNav>
+        {showTutorial && (
+            <TutorialOverlay 
+                type="tap" 
+                message="Tap cards to find the matching pair!" 
+                onComplete={handleTutorialComplete} 
+            />
+        )}
         {solved && <ConfettiOverlay onRestart={() => window.location.reload()} title="You Won!" subtitle={`Found all pairs in ${moves} moves`} />}
         
         {/* Match Visual Cue Overlay */}

@@ -10,6 +10,7 @@ interface UserContextType {
   updateActiveProfile: (data: Partial<UserProfile>) => void;
   completeLesson: (levelId: number) => void;
   saveGameScore: (gameId: string, score: number) => void;
+  markTutorialSeen: (tutorialId: string) => void;
   deleteProfile: (id: string) => void;
   logout: () => void;
 }
@@ -51,7 +52,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       avatar: type === 'kid' ? '🐻' : '👤',
       progress: {
         completedLessons: [],
-        gameScores: {}
+        gameScores: {},
+        tutorialsSeen: []
       }
     };
     setProfiles(prev => [...prev, newProfile]);
@@ -108,6 +110,23 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }));
   };
 
+  const markTutorialSeen = (tutorialId: string) => {
+    if (!activeProfileId) return;
+    setProfiles(prev => prev.map(p => {
+      if (p.id !== activeProfileId) return p;
+      const seen = p.progress?.tutorialsSeen || [];
+      if (seen.includes(tutorialId)) return p;
+      
+      return {
+        ...p,
+        progress: {
+          ...p.progress,
+          tutorialsSeen: [...seen, tutorialId]
+        }
+      };
+    }));
+  };
+
   const deleteProfile = (id: string) => {
     setProfiles(prev => prev.filter(p => p.id !== id));
     if (activeProfileId === id) setActiveProfileId(null);
@@ -118,7 +137,7 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   return (
-    <UserContext.Provider value={{ profiles, activeProfile, addProfile, switchProfile, updateActiveProfile, completeLesson, saveGameScore, deleteProfile, logout }}>
+    <UserContext.Provider value={{ profiles, activeProfile, addProfile, switchProfile, updateActiveProfile, completeLesson, saveGameScore, markTutorialSeen, deleteProfile, logout }}>
       {children}
     </UserContext.Provider>
   );

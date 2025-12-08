@@ -44,11 +44,11 @@ const TextChat = () => {
   };
 
   return (
-    <div className="flex flex-col h-[500px] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-      <div className="flex-1 overflow-y-auto p-4 space-y-4">
+    <div className="flex flex-col h-[calc(100vh-180px)] md:h-[500px] bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden relative">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-20">
         {messages.map((m) => (
           <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-            <div className={`max-w-[80%] p-3 rounded-2xl text-sm ${m.role === 'user' ? 'bg-primary text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none'}`}>
+            <div className={`max-w-[85%] p-3 rounded-2xl text-sm ${m.role === 'user' ? 'bg-primary text-white rounded-tr-none' : 'bg-gray-100 text-gray-800 rounded-tl-none'}`}>
               {m.text}
               {m.role === 'model' && !m.isError && (
                  <button 
@@ -73,15 +73,17 @@ const TextChat = () => {
         )}
         <div ref={scrollRef} />
       </div>
-      <div className="p-3 border-t bg-gray-50 flex gap-2">
+
+      {/* Input bar - Sticky Bottom */}
+      <div className="absolute bottom-0 left-0 right-0 p-3 border-t bg-gray-50 flex gap-2 z-10 backdrop-blur-sm bg-white/90">
         <input 
           value={input}
           onChange={(e) => setInput(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleSend()}
           placeholder="Type in Igbo or English..."
-          className="flex-1 bg-white border border-gray-200 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-gray-800"
+          className="flex-1 bg-white border border-gray-200 rounded-full px-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary text-gray-800 h-10"
         />
-        <button onClick={handleSend} disabled={loading} className="p-2 bg-primary text-white rounded-full disabled:opacity-50 hover:bg-orange-600 transition-colors"><Send size={20} /></button>
+        <button onClick={handleSend} disabled={loading} className="p-2 bg-primary text-white rounded-full disabled:opacity-50 hover:bg-orange-600 transition-colors h-10 w-10 flex items-center justify-center shadow-sm active:scale-95"><Send size={18} /></button>
       </div>
     </div>
   );

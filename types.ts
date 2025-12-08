@@ -88,6 +88,7 @@ export interface UserProfile {
   progress?: {
     completedLessons: number[];
     gameScores: Record<string, number>;
+    tutorialsSeen?: string[]; // Track seen tutorials
   };
 }
 

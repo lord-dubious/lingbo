@@ -1,19 +1,35 @@
+
 import React, { useState, useEffect } from 'react';
 import { Volume2, ChevronRight, RotateCw, Star } from 'lucide-react';
 import { KIDS_FLASHCARDS } from '../../constants';
 import { playPCMAudio, playGameSound } from '../../utils/audioUtils';
 import { generateIgboSpeech } from '../../services/geminiService';
 import Layout from '../Layout';
+import { useUser } from '../../context/UserContext';
+import TutorialOverlay from '../TutorialOverlay';
 
 export const WordFlash = () => {
     const [currentCard, setCurrentCard] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const card = KIDS_FLASHCARDS[currentCard];
+    
+    const { activeProfile, markTutorialSeen } = useUser();
+    const [showTutorial, setShowTutorial] = useState(false);
 
-    // Preload speech to make it faster
     useEffect(() => {
         setIsFlipped(false);
     }, [currentCard]);
+
+    useEffect(() => {
+        if (activeProfile && (!activeProfile.progress?.tutorialsSeen?.includes('word_flash'))) {
+            setShowTutorial(true);
+        }
+    }, []);
+    
+    const handleTutorialComplete = () => {
+        setShowTutorial(false);
+        markTutorialSeen('word_flash');
+    };
     
     const next = () => {
         playGameSound('click');
@@ -38,6 +54,13 @@ export const WordFlash = () => {
 
     return (
         <Layout title="Word Flash" showBack isKidsMode hideBottomNav>
+            {showTutorial && (
+                <TutorialOverlay 
+                    type="tap" 
+                    message="Tap the card to see the Igbo word!" 
+                    onComplete={handleTutorialComplete} 
+                />
+            )}
             <div className="flex flex-col items-center h-[calc(100vh-140px)] justify-between pb-4">
               
               {/* Progress Dots */}

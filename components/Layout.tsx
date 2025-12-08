@@ -1,6 +1,7 @@
+
 import React from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, User, Bell, Home, BookOpen, Mic, Library } from 'lucide-react';
+import { ArrowLeft, User, Bell, Home, BookOpen, Mic, Library, ChevronLeft } from 'lucide-react';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -47,23 +48,22 @@ const Layout: React.FC<LayoutProps> = ({
   };
 
   const activeTab = getActiveTab(location.pathname);
-
-  // Logo URL constant
   const LOGO_URL = "/assets/images/lingbo_logo_main.png";
 
   return (
-    <div className={`min-h-screen ${isKidsMode ? 'bg-yellow-50' : 'bg-gray-50'} font-sans transition-colors duration-300`}>
+    <div className={`min-h-screen ${isKidsMode ? 'bg-yellow-50' : 'bg-gray-50'} font-sans transition-colors duration-300 pb-[env(safe-area-inset-bottom)]`}>
       {/* Header */}
       <header className={`sticky top-0 z-40 ${isKidsMode ? 'bg-yellow-400' : 'bg-white'} shadow-sm px-4 py-3 flex items-center justify-between transition-colors duration-300`}>
         <div className="flex items-center gap-3">
-          {showBack && (
+          {/* Back Button for Adults (Top Left) */}
+          {showBack && !isKidsMode && (
             <button onClick={handleBack} className="p-2 hover:bg-black/5 rounded-full transition-colors" aria-label="Go Back">
-              <ArrowLeft size={24} className={isKidsMode ? 'text-blue-600' : 'text-gray-700'} />
+              <ArrowLeft size={24} className="text-gray-700" />
             </button>
           )}
           
           <Link to="/" className="flex items-center gap-3 group">
-            {!showBack && (
+            {(!showBack || isKidsMode) && (
               <img 
                 src={LOGO_URL} 
                 alt="Lingbo Logo" 
@@ -93,9 +93,20 @@ const Layout: React.FC<LayoutProps> = ({
         {children}
       </main>
 
-      {/* Bottom Navigation */}
+      {/* Kids Mode: Bottom-Left Back Button (Accessible) */}
+      {isKidsMode && showBack && (
+        <button 
+          onClick={handleBack}
+          className="fixed bottom-6 left-6 z-50 bg-white border-4 border-yellow-300 text-yellow-600 rounded-full p-4 shadow-xl hover:scale-110 active:scale-90 transition-transform"
+          aria-label="Back"
+        >
+          <ChevronLeft size={32} strokeWidth={3} />
+        </button>
+      )}
+
+      {/* Adult Mode: Bottom Navigation */}
       {!isKidsMode && !hideBottomNav && (
-        <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 pt-2 pb-6 px-4 z-40 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
+        <nav className="fixed bottom-0 left-0 w-full bg-white border-t border-gray-200 pt-2 pb-[calc(1.5rem+env(safe-area-inset-bottom))] px-4 z-40 shadow-[0_-5px_20px_rgba(0,0,0,0.05)]">
           <div className="max-w-lg md:max-w-3xl lg:max-w-5xl mx-auto grid grid-cols-5 items-end">
             
             <Link to="/" className={`flex flex-col items-center gap-1 transition-colors ${activeTab === 'home' ? 'text-primary' : 'text-gray-400'} hover:text-primary`}>
