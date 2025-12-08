@@ -1,143 +1,163 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { UserProfile, ProfileType } from '../types';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+// Types
+export interface UserProfile {
+  id: string;
+  name: string;
+  avatar: string;
+  level: number;
+  xp: number;
+  progress: {
+    completedLessons: number[];
+    unlockedLevels: number[];
+    quizScores: Record<number, number>;
+  };
+  settings: {
+    soundEnabled: boolean;
+    musicEnabled: boolean;
+  };
+}
 
 interface UserContextType {
   profiles: UserProfile[];
   activeProfile: UserProfile | null;
-  addProfile: (name: string, type: ProfileType) => void;
+  createProfile: (name: string, avatar: string) => void;
   switchProfile: (profileId: string) => void;
-  updateActiveProfile: (data: Partial<UserProfile>) => void;
+  updateProgress: (xpDetails: number) => void;
   completeLesson: (levelId: number) => void;
-  saveGameScore: (gameId: string, score: number) => void;
-  markTutorialSeen: (tutorialId: string) => void;
-  deleteProfile: (id: string) => void;
-  logout: () => void;
+  deleteProfile: (profileId: string) => void;
 }
 
 const UserContext = createContext<UserContextType | undefined>(undefined);
 
 export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [profiles, setProfiles] = useState<UserProfile[]>(() => {
-    try {
-      const saved = localStorage.getItem('lingbo_profiles');
-      return saved ? JSON.parse(saved) : [];
-    } catch { return []; }
-  });
+  const [profiles, setProfiles] = useState<UserProfile[]>([]);
+  const [activeProfile, setActiveProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
 
-  const [activeProfileId, setActiveProfileId] = useState<string | null>(() => {
-    return localStorage.getItem('lingbo_active_profile_id');
-  });
-
+  // Load from AsyncStorage on mount
   useEffect(() => {
-    localStorage.setItem('lingbo_profiles', JSON.stringify(profiles));
-  }, [profiles]);
+    const loadData = async () => {
+      try {
+        const savedProfiles = await AsyncStorage.getItem('lingbo_profiles');
+        const savedActiveId = await AsyncStorage.getItem('lingbo_active_profile_id');
 
+        if (savedProfiles) {
+          const parsedProfiles = JSON.parse(savedProfiles);
+          setProfiles(parsedProfiles);
+
+          if (savedActiveId) {
+            const active = parsedProfiles.find((p: UserProfile) => p.id === savedActiveId);
+            if (active) setActiveProfile(active);
+          }
+        }
+      } catch (e) {
+        console.error("Failed to load user data", e);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, []);
+
+  // Save to AsyncStorage whenever state changes
   useEffect(() => {
-    if (activeProfileId) localStorage.setItem('lingbo_active_profile_id', activeProfileId);
-    else localStorage.removeItem('lingbo_active_profile_id');
-  }, [activeProfileId]);
+    if (loading) return;
+    const saveData = async () => {
+        try {
+            await AsyncStorage.setItem('lingbo_profiles', JSON.stringify(profiles));
+            if (activeProfile) {
+                await AsyncStorage.setItem('lingbo_active_profile_id', activeProfile.id);
+            } else {
+                await AsyncStorage.removeItem('lingbo_active_profile_id');
+            }
+        } catch (e) {
+            console.error("Failed to save user data", e);
+        }
+    };
+    saveData();
+  }, [profiles, activeProfile, loading]);
 
-  const activeProfile = profiles.find(p => p.id === activeProfileId) || null;
-
-  const addProfile = (name: string, type: ProfileType) => {
+  const createProfile = (name: string, avatar: string) => {
     const newProfile: UserProfile = {
       id: Date.now().toString(),
       name,
-      type,
-      joinedDate: new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-      streak: 1,
+      avatar,
       level: 1,
       xp: 0,
-      avatar: type === 'kid' ? '🐻' : '👤',
       progress: {
         completedLessons: [],
-        gameScores: {},
-        tutorialsSeen: []
+        unlockedLevels: [1],
+        quizScores: {}
+      },
+      settings: {
+        soundEnabled: true,
+        musicEnabled: true
       }
     };
+
     setProfiles(prev => [...prev, newProfile]);
-    setActiveProfileId(newProfile.id);
+    setActiveProfile(newProfile);
   };
 
   const switchProfile = (profileId: string) => {
-    setActiveProfileId(profileId);
+    const profile = profiles.find(p => p.id === profileId);
+    if (profile) setActiveProfile(profile);
   };
 
-  const updateActiveProfile = (data: Partial<UserProfile>) => {
-    if (!activeProfileId) return;
-    setProfiles(prev => prev.map(p => p.id === activeProfileId ? { ...p, ...data } : p));
+  const updateProgress = (xpDelta: number) => {
+    if (!activeProfile) return;
+
+    const updatedProfile = { ...activeProfile, xp: activeProfile.xp + xpDelta };
+    // Simple level up logic: every 100 XP is a level
+    const newLevel = Math.floor(updatedProfile.xp / 100) + 1;
+    if (newLevel > updatedProfile.level) {
+        updatedProfile.level = newLevel;
+    }
+
+    setActiveProfile(updatedProfile);
+    setProfiles(prev => prev.map(p => p.id === updatedProfile.id ? updatedProfile : p));
   };
 
   const completeLesson = (levelId: number) => {
-      if (!activeProfileId) return;
-      setProfiles(prev => prev.map(p => {
-          if (p.id !== activeProfileId) return p;
-          const completed = p.progress?.completedLessons || [];
-          if (completed.includes(levelId)) return p;
-          
-          return {
-              ...p,
-              xp: (p.xp || 0) + 100,
-              progress: {
-                  ...p.progress,
-                  completedLessons: [...completed, levelId]
-              }
-          };
-      }));
+     if (!activeProfile) return;
+
+     const updatedProfile = { ...activeProfile };
+     if (!updatedProfile.progress.completedLessons.includes(levelId)) {
+         updatedProfile.progress.completedLessons.push(levelId);
+         // Unlock next level
+         const nextLevel = levelId + 1;
+         if (!updatedProfile.progress.unlockedLevels.includes(nextLevel)) {
+             updatedProfile.progress.unlockedLevels.push(nextLevel);
+         }
+         // Add XP for completion
+         updatedProfile.xp += 100;
+         updatedProfile.level = Math.floor(updatedProfile.xp / 100) + 1;
+     }
+
+     setActiveProfile(updatedProfile);
+     setProfiles(prev => prev.map(p => p.id === updatedProfile.id ? updatedProfile : p));
   };
 
-  const saveGameScore = (gameId: string, score: number) => {
-      if (!activeProfileId) return;
-      setProfiles(prev => prev.map(p => {
-          if (p.id !== activeProfileId) return p;
-          const currentScores = p.progress?.gameScores || {};
-          const bestScore = currentScores[gameId] || 0;
-          
-          if (score > bestScore) {
-              return {
-                  ...p,
-                  progress: {
-                      ...p.progress,
-                      gameScores: {
-                          ...currentScores,
-                          [gameId]: score
-                      }
-                  }
-              }
-          }
-          return p;
-      }));
-  };
-
-  const markTutorialSeen = (tutorialId: string) => {
-    if (!activeProfileId) return;
-    setProfiles(prev => prev.map(p => {
-      if (p.id !== activeProfileId) return p;
-      const seen = p.progress?.tutorialsSeen || [];
-      if (seen.includes(tutorialId)) return p;
-      
-      return {
-        ...p,
-        progress: {
-          ...p.progress,
-          tutorialsSeen: [...seen, tutorialId]
-        }
-      };
-    }));
-  };
-
-  const deleteProfile = (id: string) => {
-    setProfiles(prev => prev.filter(p => p.id !== id));
-    if (activeProfileId === id) setActiveProfileId(null);
-  };
-
-  const logout = () => {
-    setActiveProfileId(null);
+  const deleteProfile = (profileId: string) => {
+      setProfiles(prev => prev.filter(p => p.id !== profileId));
+      if (activeProfile?.id === profileId) {
+          setActiveProfile(null);
+      }
   };
 
   return (
-    <UserContext.Provider value={{ profiles, activeProfile, addProfile, switchProfile, updateActiveProfile, completeLesson, saveGameScore, markTutorialSeen, deleteProfile, logout }}>
+    <UserContext.Provider value={{
+      profiles,
+      activeProfile,
+      createProfile,
+      switchProfile,
+      updateProgress,
+      completeLesson,
+      deleteProfile
+    }}>
       {children}
     </UserContext.Provider>
   );
@@ -145,6 +165,8 @@ export const UserProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
 export const useUser = () => {
   const context = useContext(UserContext);
-  if (!context) throw new Error("useUser must be used within UserProvider");
+  if (context === undefined) {
+    throw new Error('useUser must be used within a UserProvider');
+  }
   return context;
 };
