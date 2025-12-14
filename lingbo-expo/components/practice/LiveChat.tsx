@@ -1,25 +1,197 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { Phone, AudioWaveform, Mic, X } from 'lucide-react-native';
+import { GoogleGenAI, LiveServerMessage, Modality, Session } from '@google/genai';
+import { base64ToUint8Array, uint8ArrayToBase64, pcmToAudioBuffer, float32ToInt16 } from '../../utils/audioUtils';
+
+// API Key from Expo environment
+const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
 
 const LiveChat = () => {
     const [connected, setConnected] = useState(false);
     const [isSpeaking, setIsSpeaking] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
+    // Refs for audio contexts and session management
+    const audioContextOutputRef = useRef<AudioContext | null>(null);
+    const audioContextInputRef = useRef<AudioContext | null>(null);
+    const nextStartTimeRef = useRef<number>(0);
+    const processorRef = useRef<ScriptProcessorNode | null>(null);
+    const streamRef = useRef<MediaStream | null>(null);
+    const sessionRef = useRef<Promise<Session> | null>(null);
+
+    useEffect(() => {
+        // Cleanup on unmount
+        return () => disconnect();
+    }, []);
+
     const connect = async () => {
         setError(null);
 
-        // Note: Real-time Gemini Live API requires WebSocket
-        // This is a placeholder for the mobile implementation
-        // You'll need to implement audio streaming with expo-av
+        // Check if we're on web platform (Live API requires WebSocket support)
+        if (Platform.OS !== 'web') {
+            setError("Live voice is available on web. Use Text Chat on mobile for now.");
+            return;
+        }
 
-        setError("Live conversation requires additional setup for mobile. Use Chat mode for now.");
+        if (!API_KEY) {
+            setError("API Key missing. Configure EXPO_PUBLIC_GEMINI_API_KEY");
+            return;
+        }
+
+        try {
+            // 1. Setup Output Audio Context (24kHz for Gemini output)
+            const audioCtxOut = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 24000 });
+            await audioCtxOut.resume();
+            audioContextOutputRef.current = audioCtxOut;
+            nextStartTimeRef.current = audioCtxOut.currentTime + 0.1;
+
+            // 2. Setup Input Audio Context (16kHz for Gemini input)
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            streamRef.current = stream;
+
+            const audioCtxIn = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+            audioContextInputRef.current = audioCtxIn;
+            await audioCtxIn.resume();
+
+            const source = audioCtxIn.createMediaStreamSource(stream);
+            const processor = audioCtxIn.createScriptProcessor(4096, 1, 1);
+            processorRef.current = processor;
+
+            source.connect(processor);
+            processor.connect(audioCtxIn.destination); // Necessary for Chrome to fire events
+
+            // 3. Connect to Gemini Live API
+            const client = new GoogleGenAI({ apiKey: API_KEY });
+            const sessionPromise = client.live.connect({
+                model: 'gemini-2.5-flash-native-audio-preview-09-2025',
+                config: {
+                    responseModalities: [Modality.AUDIO],
+                    speechConfig: {
+                        voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
+                    },
+                    systemInstruction: {
+                        parts: [{
+                            text: "You are Chike, a friendly and patient Igbo language teacher. Speak English with a Nigerian accent. Keep responses short and conversational. Teach basic Igbo phrases. Always use correct Igbo diacritics when writing Igbo words."
+                        }]
+                    }
+                },
+                callbacks: {
+                    onopen: () => {
+                        setConnected(true);
+                        setIsSpeaking(false);
+                    },
+                    onmessage: async (message: LiveServerMessage) => {
+                        // Extract audio data from server response
+                        const base64Audio = message.serverContent?.modelTurn?.parts?.[0]?.inlineData?.data;
+                        if (base64Audio) {
+                            setIsSpeaking(true);
+                            const ctx = audioContextOutputRef.current;
+                            if (!ctx) return;
+
+                            try {
+                                // Decode and Schedule playback
+                                const pcmData = base64ToUint8Array(base64Audio);
+                                const buffer = await pcmToAudioBuffer(pcmData, ctx, 24000, 1);
+
+                                const audioSource = ctx.createBufferSource();
+                                audioSource.buffer = buffer;
+                                audioSource.connect(ctx.destination);
+
+                                // Smart Scheduling - avoid overlap
+                                if (nextStartTimeRef.current < ctx.currentTime) {
+                                    nextStartTimeRef.current = ctx.currentTime + 0.05;
+                                }
+
+                                audioSource.start(nextStartTimeRef.current);
+                                nextStartTimeRef.current += buffer.duration;
+
+                                // Reset speaking state when audio ends
+                                audioSource.onended = () => {
+                                    if (ctx.currentTime >= nextStartTimeRef.current - 0.1) {
+                                        setIsSpeaking(false);
+                                    }
+                                };
+                            } catch (err) {
+                                console.error("Audio decoding error:", err);
+                            }
+                        }
+
+                        // Handle interruption signal
+                        if (message.serverContent?.interrupted) {
+                            nextStartTimeRef.current = audioContextOutputRef.current?.currentTime || 0;
+                            setIsSpeaking(false);
+                        }
+                    },
+                    onclose: () => {
+                        setConnected(false);
+                        setIsSpeaking(false);
+                    },
+                    onerror: (err) => {
+                        console.error("Session error:", err);
+                        setError("Connection failed. Please try again.");
+                        setConnected(false);
+                    }
+                }
+            });
+
+            sessionRef.current = sessionPromise;
+
+            // 4. Handle Microphone Input - Convert and send to Gemini
+            processor.onaudioprocess = (e) => {
+                const inputData = e.inputBuffer.getChannelData(0);
+
+                // Convert Float32 to Int16 PCM using utility function
+                const int16 = float32ToInt16(inputData);
+
+                // Convert to Base64
+                const base64Data = uint8ArrayToBase64(new Uint8Array(int16.buffer));
+
+                // Send to Gemini Live API
+                if (sessionRef.current) {
+                    sessionRef.current.then((session: Session) => {
+                        session.sendRealtimeInput({
+                            media: {
+                                mimeType: 'audio/pcm;rate=16000',
+                                data: base64Data
+                            }
+                        });
+                    });
+                }
+            };
+
+        } catch (e: any) {
+            console.error("Connection error:", e);
+            setError("Could not access microphone or connect.");
+            setConnected(false);
+        }
     };
 
     const disconnect = () => {
         setConnected(false);
         setIsSpeaking(false);
+
+        // Stop Mic Stream
+        if (streamRef.current) {
+            streamRef.current.getTracks().forEach(t => t.stop());
+            streamRef.current = null;
+        }
+        // Stop Processor
+        if (processorRef.current) {
+            processorRef.current.disconnect();
+            processorRef.current = null;
+        }
+        // Close Input Context
+        if (audioContextInputRef.current) {
+            audioContextInputRef.current.close();
+            audioContextInputRef.current = null;
+        }
+        // Close Output Context
+        if (audioContextOutputRef.current) {
+            audioContextOutputRef.current.close();
+            audioContextOutputRef.current = null;
+        }
+        sessionRef.current = null;
     };
 
     return (
@@ -80,7 +252,9 @@ const LiveChat = () => {
 
             {/* Info note */}
             <Text style={styles.note}>
-                💡 For full voice experience, use Text Chat for now
+                {Platform.OS === 'web' 
+                    ? '💡 Speak naturally - Chike will respond in real-time'
+                    : '💡 Live voice available on web. Use Text Chat on mobile.'}
             </Text>
         </View>
     );
