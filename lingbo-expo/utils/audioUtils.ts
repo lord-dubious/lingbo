@@ -64,6 +64,45 @@ export function float32ToInt16(float32Array: Float32Array): Int16Array {
 }
 
 /**
+ * Extract raw PCM data from a WAV file (base64 encoded)
+ * WAV files have a 44-byte header that needs to be stripped
+ */
+export function extractPcmFromWav(wavBase64: string): string {
+    const wavData = base64ToUint8Array(wavBase64);
+    
+    // WAV header is typically 44 bytes, but we need to read the actual size
+    // from the header to be safe
+    if (wavData.length < 44) {
+        // Too short to be a valid WAV, return as-is (might be raw PCM)
+        return wavBase64;
+    }
+    
+    // Check for RIFF header
+    const riffHeader = String.fromCharCode(wavData[0], wavData[1], wavData[2], wavData[3]);
+    if (riffHeader !== 'RIFF') {
+        // Not a WAV file, return as-is (might be raw PCM)
+        return wavBase64;
+    }
+    
+    // Find the data chunk (starts after "data" marker and 4-byte size field)
+    // The "data" marker is typically at byte 36
+    let dataStart = 44; // Default WAV header size
+    for (let i = 12; i < wavData.length - 4; i++) {
+        if (wavData[i] === 0x64 && wavData[i+1] === 0x61 && 
+            wavData[i+2] === 0x74 && wavData[i+3] === 0x61) { // "data"
+            dataStart = i + 8; // Skip "data" + 4-byte size
+            break;
+        }
+    }
+    
+    // Extract PCM data (everything after the header)
+    const pcmData = wavData.slice(dataStart);
+    
+    // Convert back to base64
+    return uint8ArrayToBase64(pcmData);
+}
+
+/**
  * Play PCM audio from base64 encoded data
  * This uses expo-av for cross-platform audio playback
  */
@@ -312,4 +351,5 @@ export default {
     uint8ArrayToBase64,
     pcmToAudioBuffer,
     float32ToInt16,
+    extractPcmFromWav,
 };
