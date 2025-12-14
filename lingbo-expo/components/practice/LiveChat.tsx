@@ -3,8 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native
 import { Phone, AudioWaveform, Mic, X, MicOff } from 'lucide-react-native';
 import { GoogleGenAI, LiveServerMessage, Modality, Session } from '@google/genai';
 import { Audio } from 'expo-av';
-import { base64ToUint8Array, uint8ArrayToBase64, pcmToAudioBuffer, float32ToInt16, playPCMAudio, extractPcmFromWav } from '../../utils/audioUtils';
-import { readAsStringAsync } from 'expo-file-system/legacy';
+import { useAudioRecorder, AudioDataEvent } from '@siteed/expo-audio-studio';
+import { base64ToUint8Array, uint8ArrayToBase64, pcmToAudioBuffer, float32ToInt16, playPCMAudio } from '../../utils/audioUtils';
 
 // API Key from Expo environment
 const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
@@ -24,14 +24,17 @@ const LiveChat = () => {
     const sessionRef = useRef<Session | null>(null);
     
     // Refs for native mobile audio
-    const recordingRef = useRef<Audio.Recording | null>(null);
-    const recordingIntervalRef = useRef<NodeJS.Timeout | null>(null);
     const audioQueueRef = useRef<string[]>([]);
     const isPlayingRef = useRef<boolean>(false);
 
+    // Use expo-audio-studio for real-time audio streaming on native
+    const audioRecorder = useAudioRecorder();
+
     useEffect(() => {
         // Cleanup on unmount
-        return () => disconnect();
+        return () => {
+            disconnect();
+        };
     }, []);
 
     // Native mobile: Process audio queue for playback
@@ -56,87 +59,32 @@ const LiveChat = () => {
         setIsSpeaking(false);
     };
 
-    // Native mobile: Start recording with expo-av
-    const startNativeRecording = async () => {
-        try {
-            const { status } = await Audio.requestPermissionsAsync();
-            if (status !== 'granted') {
-                setError('Microphone permission denied');
-                return false;
-            }
-
-            await Audio.setAudioModeAsync({
-                allowsRecordingIOS: true,
-                playsInSilentModeIOS: true,
-                staysActiveInBackground: false,
-            });
-
-            const recording = new Audio.Recording();
-            await recording.prepareToRecordAsync({
-                android: {
-                    extension: '.wav',
-                    outputFormat: Audio.AndroidOutputFormat.DEFAULT,
-                    audioEncoder: Audio.AndroidAudioEncoder.DEFAULT,
-                    sampleRate: 16000,
-                    numberOfChannels: 1,
-                    bitRate: 128000,
-                },
-                ios: {
-                    extension: '.wav',
-                    audioQuality: Audio.IOSAudioQuality.HIGH,
-                    sampleRate: 16000,
-                    numberOfChannels: 1,
-                    bitRate: 128000,
-                    linearPCMBitDepth: 16,
-                    linearPCMIsBigEndian: false,
-                    linearPCMIsFloat: false,
-                },
-                web: {
-                    mimeType: 'audio/webm',
-                    bitsPerSecond: 128000,
-                },
-            });
-
-            await recording.startAsync();
-            recordingRef.current = recording;
-            setIsRecording(true);
-            return true;
-        } catch (e) {
-            console.error('Recording start error:', e);
-            setError('Could not start recording');
-            return false;
-        }
-    };
-
-    // Native mobile: Stop recording and send to Gemini
-    const stopNativeRecording = async () => {
-        if (!recordingRef.current) return;
+    // Native mobile: Handle real-time audio stream from expo-audio-studio
+    const handleNativeAudioStream = async (event: AudioDataEvent) => {
+        if (!sessionRef.current) return;
 
         try {
-            setIsRecording(false);
-            await recordingRef.current.stopAndUnloadAsync();
-            const uri = recordingRef.current.getURI();
-            recordingRef.current = null;
-
-            if (uri && sessionRef.current) {
-                // Read the audio file and convert to base64
-                const wavBase64 = await readAsStringAsync(uri, {
-                    encoding: 'base64',
-                });
-
-                // Extract raw PCM data from WAV (strip WAV header)
-                const pcmBase64 = extractPcmFromWav(wavBase64);
-
-                // Send to Gemini Live API
-                sessionRef.current.sendRealtimeInput({
-                    media: {
-                        mimeType: 'audio/pcm;rate=16000',
-                        data: pcmBase64
-                    }
-                });
+            // The data is base64 encoded PCM from native, or Float32Array from web
+            let base64Data: string;
+            
+            if (typeof event.data === 'string') {
+                // Native: data is already base64 encoded
+                base64Data = event.data;
+            } else {
+                // Web fallback: convert Float32Array to Int16 PCM then base64
+                const int16 = float32ToInt16(event.data);
+                base64Data = uint8ArrayToBase64(new Uint8Array(int16.buffer));
             }
+
+            // Send to Gemini Live API
+            sessionRef.current.sendRealtimeInput({
+                media: {
+                    mimeType: 'audio/pcm;rate=16000',
+                    data: base64Data
+                }
+            });
         } catch (e) {
-            console.error('Recording stop error:', e);
+            console.error('Failed to send audio stream to Gemini Live API:', e);
         }
     };
 
@@ -156,7 +104,7 @@ const LiveChat = () => {
                 // Web platform: Use Web Audio API for real-time streaming
                 await connectWeb(client);
             } else {
-                // Native mobile: Use expo-av for push-to-talk style
+                // Native mobile: Use expo-audio-studio for real-time streaming
                 await connectNative(client);
             }
         } catch (e: any) {
@@ -276,8 +224,21 @@ const LiveChat = () => {
         };
     };
 
-    // Native mobile connection with expo-av
+    // Native mobile connection with expo-audio-studio for real-time streaming
     const connectNative = async (client: GoogleGenAI) => {
+        // Request audio permissions
+        const { status } = await Audio.requestPermissionsAsync();
+        if (status !== 'granted') {
+            setError('Microphone permission denied');
+            return;
+        }
+
+        await Audio.setAudioModeAsync({
+            allowsRecordingIOS: true,
+            playsInSilentModeIOS: true,
+            staysActiveInBackground: false,
+        });
+
         // Connect to Gemini Live API
         const session = await client.live.connect({
             model: 'gemini-2.5-flash-native-audio-preview-09-2025',
@@ -313,6 +274,7 @@ const LiveChat = () => {
                 onclose: () => {
                     setConnected(false);
                     setIsSpeaking(false);
+                    setIsRecording(false);
                 },
                 onerror: (err) => {
                     console.error("Session error:", err);
@@ -324,16 +286,23 @@ const LiveChat = () => {
 
         sessionRef.current = session;
         setConnected(true);
-    };
 
-    // Handle recording button press (native mobile)
-    const handleRecordPress = async () => {
-        if (!connected) return;
-        
-        if (isRecording) {
-            await stopNativeRecording();
-        } else {
-            await startNativeRecording();
+        // Start real-time audio streaming using expo-audio-studio
+        try {
+            await audioRecorder.startRecording({
+                sampleRate: 16000,
+                channels: 1,
+                encoding: 'pcm_16bit',
+                interval: 100, // Stream audio every 100ms for low latency
+                onAudioStream: handleNativeAudioStream,
+                output: {
+                    primary: { enabled: false } // Don't save to file, just stream
+                }
+            });
+            setIsRecording(true);
+        } catch (e) {
+            console.error('Failed to start audio streaming in connectNative():', e);
+            setError('Failed to start audio streaming. Please check microphone permissions.');
         }
     };
 
@@ -342,16 +311,11 @@ const LiveChat = () => {
         setIsSpeaking(false);
         setIsRecording(false);
 
-        // Clear recording interval
-        if (recordingIntervalRef.current) {
-            clearInterval(recordingIntervalRef.current);
-            recordingIntervalRef.current = null;
-        }
-
-        // Stop native recording
-        if (recordingRef.current) {
-            recordingRef.current.stopAndUnloadAsync();
-            recordingRef.current = null;
+        // Stop native audio streaming (fire and forget)
+        if (audioRecorder.isRecording) {
+            audioRecorder.stopRecording().catch(e => {
+                console.error('Failed to stop audio recording in disconnect():', e);
+            });
         }
 
         // Clear audio queue
@@ -413,7 +377,7 @@ const LiveChat = () => {
             {/* Title */}
             <Text style={styles.title}>
                 {connected
-                    ? (isSpeaking ? 'Chike is speaking...' : isRecording ? 'Listening...' : 'Tap to speak')
+                    ? (isSpeaking ? 'Chike is speaking...' : isRecording ? 'Listening...' : 'Connected')
                     : 'Start Call'}
             </Text>
 
@@ -422,9 +386,7 @@ const LiveChat = () => {
                 {error ? (
                     <Text style={styles.errorText}>{error}</Text>
                 ) : connected
-                    ? Platform.OS === 'web' 
-                        ? 'Speak naturally in English or Igbo.'
-                        : 'Hold the mic button to speak, release to send.'
+                    ? 'Speak naturally in English or Igbo.'
                     : 'Practice conversation with a real-time AI tutor.'}
             </Text>
 
@@ -436,23 +398,6 @@ const LiveChat = () => {
                 </TouchableOpacity>
             ) : (
                 <View style={styles.connectedButtons}>
-                    {/* Push-to-talk button for native mobile */}
-                    {Platform.OS !== 'web' && (
-                        <TouchableOpacity 
-                            onPressIn={handleRecordPress}
-                            onPressOut={handleRecordPress}
-                            style={[
-                                styles.recordButton,
-                                isRecording && styles.recordButtonActive
-                            ]}
-                        >
-                            <Mic size={32} color="white" />
-                            <Text style={styles.recordButtonText}>
-                                {isRecording ? 'Release to send' : 'Hold to speak'}
-                            </Text>
-                        </TouchableOpacity>
-                    )}
-                    
                     <TouchableOpacity onPress={disconnect} style={styles.endButton}>
                         <X size={24} color="#ef4444" />
                         <Text style={styles.endButtonText}>End Call</Text>
@@ -462,9 +407,7 @@ const LiveChat = () => {
 
             {/* Info note */}
             <Text style={styles.note}>
-                {Platform.OS === 'web' 
-                    ? '💡 Speak naturally - Chike will respond in real-time'
-                    : '💡 Hold the mic button to record, release to send to Chike'}
+                💡 Speak naturally - Chike will respond in real-time
             </Text>
         </View>
     );
@@ -569,29 +512,6 @@ const styles = StyleSheet.create({
     connectedButtons: {
         alignItems: 'center',
         gap: 16,
-    },
-    recordButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 12,
-        backgroundColor: '#f97316',
-        paddingHorizontal: 32,
-        paddingVertical: 20,
-        borderRadius: 32,
-        shadowColor: '#f97316',
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.3,
-        shadowRadius: 8,
-        elevation: 4,
-    },
-    recordButtonActive: {
-        backgroundColor: '#ef4444',
-        shadowColor: '#ef4444',
-    },
-    recordButtonText: {
-        color: 'white',
-        fontSize: 16,
-        fontWeight: 'bold',
     },
     endButton: {
         flexDirection: 'row',
