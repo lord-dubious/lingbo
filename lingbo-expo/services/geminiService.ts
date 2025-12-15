@@ -1,4 +1,5 @@
-import { GoogleGenAI } from '@google/genai';
+import { GoogleGenAI, GenerateContentResponse, Modality } from '@google/genai';
+import { AnalysisResult } from '../types';
 
 // In Expo, process.env is replaced at build time for EXPO_PUBLIC_* variables
 const API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || '';
@@ -14,28 +15,34 @@ const getClient = () => {
 };
 
 /**
- * Generate a response from the AI tutor "Chike"
+ * Generate a response from the AI tutor "Chike" (Gemini 3.0 Pro with Thinking)
  */
 export const generateTutorResponse = async (userText: string): Promise<string> => {
     const ai = getClient();
     if (!ai) return "API Key missing. Please configure EXPO_PUBLIC_GEMINI_API_KEY";
 
     try {
-        const model = 'gemini-2.0-flash';
-        const prompt = `You are 'Chike', a native Igbo language tutor. Respond in a friendly, encouraging way. 
-If the user speaks English, translate key phrases to Igbo.
-If the user speaks Igbo, correct their grammar if needed and provide the English translation.
-Always use correct Igbo diacritics and tone markings.
-Keep responses concise (under 100 words).
+        const model = 'gemini-3-pro-preview';
+        const prompt = `You are 'Chike', a native Igbo language tutor. 
+    User input: "${userText}"
+    
+    Instructions:
+    1. If the user writes in English, translate it to Igbo and explain briefly.
+    2. If the user writes in Igbo, correct any grammar mistakes.
+    3. CRITICAL: When writing Igbo words, you MUST use correct standard Igbo diacritics (dots under ọ, ụ, ị) and tone markings where necessary to help with pronunciation.
+    4. Prioritize Central Igbo dialect.
+    5. Reply in a helpful, encouraging tone.`;
 
-User: ${userText}`;
-
-        const response = await ai.models.generateContent({
+        // Enable thinking for complex tutoring
+        const response: GenerateContentResponse = await ai.models.generateContent({
             model: model,
             contents: prompt,
+            config: {
+                thinkingConfig: { thinkingBudget: 1024 }, // Set a budget for reasoning
+            }
         });
 
-        return response.text || "Ndo, I couldn't understand. Try again?";
+        return response.text || "Ndo (Sorry), I couldn't understand that.";
     } catch (error) {
         console.error('Tutor response error:', error);
         return "Network error. Please try again.";
@@ -50,23 +57,25 @@ export const generateIgboSpeech = async (text: string): Promise<string | null> =
     if (!ai) return null;
 
     try {
+        // Improved Logic: Explicitly instruct the model to pronounce as Igbo with specific attention to tones
+        const promptText = `Pronounce the following text clearly in Igbo, paying strict attention to tonality and diacritics: "${text}"`;
+
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: `[SPEAK_IGBO]: ${text}`,
+            model: 'gemini-2.5-flash-preview-tts',
+            contents: [{ parts: [{ text: promptText }] }],
             config: {
-                responseModalities: ['AUDIO'],
+                responseModalities: [Modality.AUDIO],
                 speechConfig: {
-                    voiceConfig: { prebuiltVoiceConfig: { voiceName: 'Zephyr' } }
-                }
-            }
+                    voiceConfig: {
+                        // Using Zephyr as it tends to have a deeper, more neutral tone suitable for West African accents
+                        prebuiltVoiceConfig: { voiceName: 'Zephyr' },
+                    },
+                },
+            },
         });
 
-        // Extract audio data from response
-        const audioPart = response.candidates?.[0]?.content?.parts?.find(
-            (p: any) => p.inlineData?.mimeType?.includes('audio')
-        );
-
-        return audioPart?.inlineData?.data || null;
+        const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+        return base64Audio || null;
     } catch (error) {
         console.error('TTS error:', error);
         return null;
@@ -74,19 +83,26 @@ export const generateIgboSpeech = async (text: string): Promise<string | null> =
 };
 
 /**
- * Transcribe audio to text (Speech-to-Text)
+ * Transcribe audio to text (Speech-to-Text) - Using Flash
  */
-export const transcribeUserAudio = async (audioBase64: string): Promise<string> => {
+export const transcribeUserAudio = async (audioBase64: string, mimeType: string = 'audio/wav'): Promise<string> => {
     const ai = getClient();
     if (!ai) return '';
 
     try {
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [
-                { text: 'Transcribe the following audio. If it\'s Igbo, transcribe with correct diacritics:' },
-                { inlineData: { mimeType: 'audio/wav', data: audioBase64 } }
-            ]
+            model: 'gemini-2.5-flash',
+            contents: {
+                parts: [
+                    {
+                        inlineData: {
+                            mimeType: mimeType,
+                            data: audioBase64
+                        }
+                    },
+                    { text: "Transcribe this audio exactly. If it is Igbo, write the Igbo words with correct diacritics. If it's English, write English." }
+                ]
+            }
         });
 
         return response.text || '';
@@ -97,54 +113,52 @@ export const transcribeUserAudio = async (audioBase64: string): Promise<string> 
 };
 
 /**
- * Analyze pronunciation and provide feedback
+ * Analyze pronunciation and provide feedback (Structured)
  */
 export const analyzePronunciation = async (
     targetPhrase: string,
     userTranscription: string
-): Promise<{
-    score: number;
-    feedback: string;
-    corrections: string[];
-}> => {
+): Promise<AnalysisResult | null> => {
     const ai = getClient();
-    if (!ai) {
-        return { score: 0, feedback: 'API not available', corrections: [] };
-    }
+    if (!ai) return null;
 
     try {
-        const prompt = `Compare the target Igbo phrase to what the user said.
-Target: "${targetPhrase}"
-User said: "${userTranscription}"
-
-Respond in this exact JSON format:
-{
-  "score": <0-100 accuracy score>,
-  "feedback": "<brief encouraging feedback>",
-  "corrections": ["<specific corrections if any>"]
-}`;
+        const prompt = `
+        Role: Igbo Language Teacher.
+        Task: Compare the User's Audio Transcript to the Target Phrase.
+        
+        Target Phrase: "${targetPhrase}"
+        User Audio Transcript: "${userTranscription}"
+        
+        Return a JSON object with this EXACT schema:
+        {
+          "user_said_igbo": "Transcribe what the user actually said in Igbo (or 'N/A' if completely wrong)",
+          "user_said_english": "Translate what the user said to English",
+          "feedback": "Specific advice on pronunciation, tone, or grammar. Keep it short and encouraging.",
+          "score": number (0-100 based on accuracy)
+        }
+      `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
+            model: 'gemini-2.5-flash',
             contents: prompt,
+            config: {
+                responseMimeType: 'application/json'
+            }
         });
 
-        const text = response.text || '{}';
-        // Try to parse JSON from response
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
+        const text = response.text;
+        if (!text) return null;
 
-        return { score: 50, feedback: 'Good effort!', corrections: [] };
+        return JSON.parse(text) as AnalysisResult;
     } catch (error) {
         console.error('Pronunciation analysis error:', error);
-        return { score: 0, feedback: 'Analysis failed', corrections: [] };
+        return null;
     }
 };
 
 /**
- * Grade handwriting from an image (for TraceBook)
+ * Grade handwriting from an image (Vision)
  */
 export const gradeHandwriting = async (
     imageBase64: string,
@@ -152,41 +166,42 @@ export const gradeHandwriting = async (
 ): Promise<{
     score: number;
     feedback: string;
-}> => {
+} | null> => {
     const ai = getClient();
-    if (!ai) {
-        return { score: 0, feedback: 'API not available' };
-    }
+    if (!ai) return null;
 
     try {
-        const prompt = `You are grading a child's handwriting practice.
-They were asked to trace the Igbo letter/word: "${targetLetter}"
-Look at the image and grade their attempt.
-
-Respond in JSON format:
-{
-  "score": <0-100>,
-  "feedback": "<brief encouraging feedback for a child>"
-}`;
+        const prompt = `
+            Act as a kind kindergarten teacher. 
+            The user has attempted to trace/write the Igbo letter or word: "${targetLetter}".
+            Analyze the image provided.
+            
+            Return a JSON object:
+            {
+                "score": number (0-100, be generous but accurate. If it looks like scribbles, give low score. If it follows the shape, give high score.),
+                "feedback": "Simple, encouraging feedback in English (max 1 sentence) for a child."
+            }
+        `;
 
         const response = await ai.models.generateContent({
-            model: 'gemini-2.0-flash',
-            contents: [
-                { text: prompt },
-                { inlineData: { mimeType: 'image/png', data: imageBase64 } }
-            ]
+            model: 'gemini-2.5-flash',
+            contents: {
+                parts: [
+                    { inlineData: { mimeType: 'image/png', data: imageBase64 } },
+                    { text: prompt }
+                ]
+            },
+            config: {
+                responseMimeType: 'application/json'
+            }
         });
 
-        const text = response.text || '{}';
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) {
-            return JSON.parse(jsonMatch[0]);
-        }
-
-        return { score: 70, feedback: 'Good try!' };
+        const text = response.text;
+        if (!text) return null;
+        return JSON.parse(text);
     } catch (error) {
         console.error('Handwriting grading error:', error);
-        return { score: 0, feedback: 'Grading failed' };
+        return null;
     }
 };
 
